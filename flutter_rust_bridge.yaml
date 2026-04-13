@@ -1,0 +1,5 @@
+rust_input: "crate::api"
+rust_output: "rust/src/frb_generated.rs"
+dart_output: "flutter_app/lib/frb_generated.dart"
+rust_root: "rust/"
+dart_root: "flutter_app/"
