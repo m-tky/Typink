@@ -19,6 +19,9 @@ nix-shell -p cargo rustfmt flutter llvmPackages.libclang.lib openssl pkg-config 
   flutter_rust_bridge_codegen generate
 
   echo \"Bridge generation complete!\"
-  echo \"Starting Rust build inside nix-shell...\"
+  echo \"Starting Rust build for Linux (host)...\"
   cd rust && cargo build
+  
+  echo \"\nSuccess! To run on Linux, use:\"
+  echo \"cd flutter_app && flutter run -d linux\"
 "
