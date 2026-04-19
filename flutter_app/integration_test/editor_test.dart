@@ -62,7 +62,7 @@ void main() {
     
     // It should have moved to the second line or somewhere > 0
     expect(view.cursorGlobalU16.toInt(), greaterThan(5));
-    expect(view.mode, equals(VimMode.normal)); // Should still be in Normal mode
+    expect(view.mode, equals(bridge.VimMode.normal)); // Should still be in Normal mode
   });
 
   testWidgets('Editor handles Vim commands (dd, p)', (WidgetTester tester) async {
