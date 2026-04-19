@@ -13,6 +13,7 @@ import 'editor.dart';
 import 'frb_generated.dart';
 import 'highlighter.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
+import 'typst_engine.dart';
 import 'vim_engine.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -30,6 +31,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  int dco_decode_box_autoadd_u_8(dynamic raw);
+
+  @protected
   BigInt dco_decode_box_autoadd_usize(dynamic raw);
 
   @protected
@@ -45,13 +49,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ExtraFile dco_decode_extra_file(dynamic raw);
 
   @protected
+  FontFileData dco_decode_font_file_data(dynamic raw);
+
+  @protected
   HighlightSpan dco_decode_highlight_span(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
   List<ExtraFile> dco_decode_list_extra_file(dynamic raw);
+
+  @protected
+  List<FontFileData> dco_decode_list_font_file_data(dynamic raw);
 
   @protected
   List<HighlightSpan> dco_decode_list_highlight_span(dynamic raw);
@@ -63,13 +76,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<RenderLine> dco_decode_list_render_line(dynamic raw);
 
   @protected
-  List<TypstError> dco_decode_list_typst_error(dynamic raw);
+  List<TypstCompletion> dco_decode_list_typst_completion(dynamic raw);
+
+  @protected
+  List<TypstDiagnostic> dco_decode_list_typst_diagnostic(dynamic raw);
 
   @protected
   List<TypstPage> dco_decode_list_typst_page(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_8(dynamic raw);
 
   @protected
   BigInt? dco_decode_opt_box_autoadd_usize(dynamic raw);
@@ -81,6 +100,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   VimRange? dco_decode_opt_box_autoadd_vim_range(dynamic raw);
 
   @protected
+  List<String>? dco_decode_opt_list_String(dynamic raw);
+
+  @protected
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -90,7 +112,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TypstCompileResult dco_decode_typst_compile_result(dynamic raw);
 
   @protected
-  TypstError dco_decode_typst_error(dynamic raw);
+  TypstCompletion dco_decode_typst_completion(dynamic raw);
+
+  @protected
+  TypstDiagnostic dco_decode_typst_diagnostic(dynamic raw);
 
   @protected
   TypstPage dco_decode_typst_page(dynamic raw);
@@ -123,6 +148,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  int sse_decode_box_autoadd_u_8(SseDeserializer deserializer);
+
+  @protected
   BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer);
 
   @protected
@@ -138,18 +166,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ExtraFile sse_decode_extra_file(SseDeserializer deserializer);
 
   @protected
+  FontFileData sse_decode_font_file_data(SseDeserializer deserializer);
+
+  @protected
   HighlightSpan sse_decode_highlight_span(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
   List<ExtraFile> sse_decode_list_extra_file(SseDeserializer deserializer);
 
   @protected
+  List<FontFileData> sse_decode_list_font_file_data(
+      SseDeserializer deserializer);
+
+  @protected
   List<HighlightSpan> sse_decode_list_highlight_span(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -158,7 +195,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<RenderLine> sse_decode_list_render_line(SseDeserializer deserializer);
 
   @protected
-  List<TypstError> sse_decode_list_typst_error(SseDeserializer deserializer);
+  List<TypstCompletion> sse_decode_list_typst_completion(
+      SseDeserializer deserializer);
+
+  @protected
+  List<TypstDiagnostic> sse_decode_list_typst_diagnostic(
+      SseDeserializer deserializer);
 
   @protected
   List<TypstPage> sse_decode_list_typst_page(SseDeserializer deserializer);
@@ -167,15 +209,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  int? sse_decode_opt_box_autoadd_u_8(SseDeserializer deserializer);
+
+  @protected
   BigInt? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer);
 
   @protected
   VimAction? sse_decode_opt_box_autoadd_vim_action(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
   VimRange? sse_decode_opt_box_autoadd_vim_range(SseDeserializer deserializer);
+
+  @protected
+  List<String>? sse_decode_opt_list_String(SseDeserializer deserializer);
 
   @protected
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -185,11 +232,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TypstCompileResult sse_decode_typst_compile_result(
-    SseDeserializer deserializer,
-  );
+      SseDeserializer deserializer);
 
   @protected
-  TypstError sse_decode_typst_error(SseDeserializer deserializer);
+  TypstCompletion sse_decode_typst_completion(SseDeserializer deserializer);
+
+  @protected
+  TypstDiagnostic sse_decode_typst_diagnostic(SseDeserializer deserializer);
 
   @protected
   TypstPage sse_decode_typst_page(SseDeserializer deserializer);
@@ -222,19 +271,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_u_8(int self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_vim_action(
-    VimAction self,
-    SseSerializer serializer,
-  );
+      VimAction self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_vim_range(
-    VimRange self,
-    SseSerializer serializer,
-  );
+      VimRange self, SseSerializer serializer);
 
   @protected
   void sse_encode_editor_view(EditorView self, SseSerializer serializer);
@@ -243,82 +291,87 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_extra_file(ExtraFile self, SseSerializer serializer);
 
   @protected
+  void sse_encode_font_file_data(FontFileData self, SseSerializer serializer);
+
+  @protected
   void sse_encode_highlight_span(HighlightSpan self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_extra_file(
-    List<ExtraFile> self,
-    SseSerializer serializer,
-  );
+      List<ExtraFile> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_font_file_data(
+      List<FontFileData> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_highlight_span(
-    List<HighlightSpan> self,
-    SseSerializer serializer,
-  );
+      List<HighlightSpan> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
-    Uint8List self,
-    SseSerializer serializer,
-  );
+      Uint8List self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_render_line(
-    List<RenderLine> self,
-    SseSerializer serializer,
-  );
+      List<RenderLine> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_typst_error(
-    List<TypstError> self,
-    SseSerializer serializer,
-  );
+  void sse_encode_list_typst_completion(
+      List<TypstCompletion> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_typst_diagnostic(
+      List<TypstDiagnostic> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_typst_page(
-    List<TypstPage> self,
-    SseSerializer serializer,
-  );
+      List<TypstPage> self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_8(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_usize(BigInt? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_vim_action(
-    VimAction? self,
-    SseSerializer serializer,
-  );
+      VimAction? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_vim_range(
-    VimRange? self,
-    SseSerializer serializer,
-  );
+      VimRange? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_list_String(List<String>? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_prim_u_8_strict(
-    Uint8List? self,
-    SseSerializer serializer,
-  );
+      Uint8List? self, SseSerializer serializer);
 
   @protected
   void sse_encode_render_line(RenderLine self, SseSerializer serializer);
 
   @protected
   void sse_encode_typst_compile_result(
-    TypstCompileResult self,
-    SseSerializer serializer,
-  );
+      TypstCompileResult self, SseSerializer serializer);
 
   @protected
-  void sse_encode_typst_error(TypstError self, SseSerializer serializer);
+  void sse_encode_typst_completion(
+      TypstCompletion self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_typst_diagnostic(
+      TypstDiagnostic self, SseSerializer serializer);
 
   @protected
   void sse_encode_typst_page(TypstPage self, SseSerializer serializer);

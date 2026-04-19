@@ -14,6 +14,10 @@ class VimAction {
   final BigInt? selectionStartColumn;
   final VimRange? deleteRange;
   final String? insertText;
+  final String? commandText;
+  final List<String>? replayKeys;
+  final String? signal;
+  final String? yankText;
 
   const VimAction({
     required this.mode,
@@ -23,6 +27,10 @@ class VimAction {
     this.selectionStartColumn,
     this.deleteRange,
     this.insertText,
+    this.commandText,
+    this.replayKeys,
+    this.signal,
+    this.yankText,
   });
 
   @override
@@ -33,7 +41,11 @@ class VimAction {
       selectionStartLine.hashCode ^
       selectionStartColumn.hashCode ^
       deleteRange.hashCode ^
-      insertText.hashCode;
+      insertText.hashCode ^
+      commandText.hashCode ^
+      replayKeys.hashCode ^
+      signal.hashCode ^
+      yankText.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -46,10 +58,24 @@ class VimAction {
           selectionStartLine == other.selectionStartLine &&
           selectionStartColumn == other.selectionStartColumn &&
           deleteRange == other.deleteRange &&
-          insertText == other.insertText;
+          insertText == other.insertText &&
+          commandText == other.commandText &&
+          replayKeys == other.replayKeys &&
+          signal == other.signal &&
+          yankText == other.yankText;
 }
 
-enum VimMode { normal, insert, visual }
+enum VimMode {
+  normal,
+  insert,
+  visual,
+  visualLine,
+  search,
+  command,
+  visualBlock,
+  replace,
+  ;
+}
 
 class VimRange {
   final BigInt startLine;

@@ -10,15 +10,27 @@ class HighlightSpan {
   final BigInt start;
   final BigInt end;
   final String label;
+  final bool bold;
+  final bool italic;
+  final int? headingLevel;
 
   const HighlightSpan({
     required this.start,
     required this.end,
     required this.label,
+    required this.bold,
+    required this.italic,
+    this.headingLevel,
   });
 
   @override
-  int get hashCode => start.hashCode ^ end.hashCode ^ label.hashCode;
+  int get hashCode =>
+      start.hashCode ^
+      end.hashCode ^
+      label.hashCode ^
+      bold.hashCode ^
+      italic.hashCode ^
+      headingLevel.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -27,5 +39,8 @@ class HighlightSpan {
           runtimeType == other.runtimeType &&
           start == other.start &&
           end == other.end &&
-          label == other.label;
+          label == other.label &&
+          bold == other.bold &&
+          italic == other.italic &&
+          headingLevel == other.headingLevel;
 }

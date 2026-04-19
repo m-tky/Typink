@@ -10,26 +10,47 @@ import 'vim_engine.dart';
 
 class EditorView {
   final List<RenderLine> lines;
+  final BigInt startLine;
   final BigInt cursorLine;
   final BigInt cursorColumnU16;
   final BigInt cursorGlobalU16;
+  final BigInt? selectionStartLine;
+  final BigInt? selectionStartColumnU16;
   final VimMode mode;
+  final String? commandText;
+  final String? searchQuery;
+  final String? signal;
+  final String? yankText;
 
   const EditorView({
     required this.lines,
+    required this.startLine,
     required this.cursorLine,
     required this.cursorColumnU16,
     required this.cursorGlobalU16,
+    this.selectionStartLine,
+    this.selectionStartColumnU16,
     required this.mode,
+    this.commandText,
+    this.searchQuery,
+    this.signal,
+    this.yankText,
   });
 
   @override
   int get hashCode =>
       lines.hashCode ^
+      startLine.hashCode ^
       cursorLine.hashCode ^
       cursorColumnU16.hashCode ^
       cursorGlobalU16.hashCode ^
-      mode.hashCode;
+      selectionStartLine.hashCode ^
+      selectionStartColumnU16.hashCode ^
+      mode.hashCode ^
+      commandText.hashCode ^
+      searchQuery.hashCode ^
+      signal.hashCode ^
+      yankText.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -37,10 +58,17 @@ class EditorView {
       other is EditorView &&
           runtimeType == other.runtimeType &&
           lines == other.lines &&
+          startLine == other.startLine &&
           cursorLine == other.cursorLine &&
           cursorColumnU16 == other.cursorColumnU16 &&
           cursorGlobalU16 == other.cursorGlobalU16 &&
-          mode == other.mode;
+          selectionStartLine == other.selectionStartLine &&
+          selectionStartColumnU16 == other.selectionStartColumnU16 &&
+          mode == other.mode &&
+          commandText == other.commandText &&
+          searchQuery == other.searchQuery &&
+          signal == other.signal &&
+          yankText == other.yankText;
 }
 
 class RenderLine {
@@ -48,17 +76,23 @@ class RenderLine {
   final List<HighlightSpan> spans;
   final bool isComposing;
   final BigInt startU16;
+  final BigInt endU16;
 
   const RenderLine({
     required this.text,
     required this.spans,
     required this.isComposing,
     required this.startU16,
+    required this.endU16,
   });
 
   @override
   int get hashCode =>
-      text.hashCode ^ spans.hashCode ^ isComposing.hashCode ^ startU16.hashCode;
+      text.hashCode ^
+      spans.hashCode ^
+      isComposing.hashCode ^
+      startU16.hashCode ^
+      endU16.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -68,5 +102,6 @@ class RenderLine {
           text == other.text &&
           spans == other.spans &&
           isComposing == other.isComposing &&
-          startU16 == other.startU16;
+          startU16 == other.startU16 &&
+          endU16 == other.endU16;
 }

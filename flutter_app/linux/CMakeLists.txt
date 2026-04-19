@@ -126,3 +126,19 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Bundle the Rust library for Typink
+set(RUST_LIB_NAME "libtypink_rust.so")
+set(RUST_TARGET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../rust/target")
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  set(RUST_LIB_SOURCE "${RUST_TARGET_DIR}/debug/${RUST_LIB_NAME}")
+else()
+  set(RUST_LIB_SOURCE "${RUST_TARGET_DIR}/release/${RUST_LIB_NAME}")
+endif()
+
+if(EXISTS "${RUST_LIB_SOURCE}")
+  install(FILES "${RUST_LIB_SOURCE}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+    COMPONENT Runtime)
+else()
+  message(WARNING "Rust library not found at ${RUST_LIB_SOURCE}. Please run 'cargo build' in the rust directory.")
+endif()

@@ -4,11 +4,16 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'workspace_provider.dart';
 
-class WorkspaceSelectorPage extends ConsumerWidget {
+class WorkspaceSelectorPage extends ConsumerStatefulWidget {
   const WorkspaceSelectorPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorkspaceSelectorPage> createState() => _WorkspaceSelectorPageState();
+}
+
+class _WorkspaceSelectorPageState extends ConsumerState<WorkspaceSelectorPage> {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -38,9 +43,22 @@ class WorkspaceSelectorPage extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   ),
                   onPressed: () async {
-                    String? result = await FilePicker.platform.getDirectoryPath();
-                    if (result != null) {
-                      await ref.read(workspaceManagerProvider).openWorkspace(Directory(result));
+                    try {
+                      String? result = await FilePicker.platform.getDirectoryPath();
+                      if (result != null) {
+                        await ref.read(workspaceManagerProvider).openWorkspace(Directory(result));
+                      }
+                    } catch (e) {
+                      debugPrint('File picker error: $e');
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: ${e.toString().contains('zenity') ? 'Zenity is missing. Please install it or use: nix-shell -p flutter zenity' : e.toString()}'),
+                            duration: const Duration(seconds: 10),
+                            action: SnackBarAction(label: 'Dismiss', onPressed: () {}),
+                          ),
+                        );
+                      }
                     }
                   },
                 ),

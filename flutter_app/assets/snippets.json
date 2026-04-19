@@ -1,0 +1,115 @@
+{
+  "if": {
+    "prefix": "if",
+    "body": "#if ${1:condition} {\n\t${2:body}\n}",
+    "description": "If statement"
+  },
+  "for": {
+    "prefix": "for",
+    "body": "#for ${1:item} in ${2:array} {\n\t${3:body}\n}",
+    "description": "For loop"
+  },
+  "math": {
+    "prefix": "math",
+    "body": "$ ${1:formula} $",
+    "description": "Inline math"
+  },
+  "equation": {
+    "prefix": "eq",
+    "body": "$ ${1:formula} $ <${2:label}>",
+    "description": "Labeled equation"
+  },
+  "math-aligned": {
+    "prefix": "align",
+    "body": "$ \n\t${1:a} &= ${2:b} \\\\\n\t${3:c} &= ${4:d}\n$ ",
+    "description": "Aligned math block"
+  },
+  "fraction": {
+    "prefix": "frac",
+    "body": "(${1:num})/(${2:den})",
+    "description": "Fraction (a/b)"
+  },
+  "square-root": {
+    "prefix": "sqrt",
+    "body": "sqrt(${1:x})",
+    "description": "Square root"
+  },
+  "sum": {
+    "prefix": "sum",
+    "body": "sum_(i=${1:1})^(${2:n}) ${3:x_i}",
+    "description": "Summation"
+  },
+  "integral": {
+    "prefix": "int",
+    "body": "integral_(${1:a})^(${2:b}) ${3:f(x)} d ${4:x}",
+    "description": "Definite integral"
+  },
+  "matrix": {
+    "prefix": "mat",
+    "body": "mat(${1:1}, ${2:2}; ${3:3}, ${4:4})",
+    "description": "Matrix (2x2)"
+  },
+  "vector": {
+    "prefix": "vec",
+    "body": "vec(${1:x}, ${2:y}, ${3:z})",
+    "description": "Vector"
+  },
+  "cases": {
+    "prefix": "cases",
+    "body": "cases(\n  ${1:1} & \"if\" ${2:x > 0},\n  ${3:0} & \"otherwise\"\n)",
+    "description": "Cases math environment"
+  },
+  "g-alpha": { "prefix": "@a", "body": "alpha", "description": "α (shortcut)" },
+  "g-beta": { "prefix": "@b", "body": "beta", "description": "β (shortcut)" },
+  "g-gamma": { "prefix": "@g", "body": "gamma", "description": "γ (shortcut)" },
+  "g-delta": { "prefix": "@d", "body": "delta", "description": "δ (shortcut)" },
+  "g-epsilon": { "prefix": "@e", "body": "epsilon", "description": "ε (shortcut)" },
+  "g-zeta": { "prefix": "@z", "body": "zeta", "description": "ζ (shortcut)" },
+  "g-eta": { "prefix": "@h", "body": "eta", "description": "η (shortcut)" },
+  "g-theta": { "prefix": "@t", "body": "theta", "description": "θ (shortcut)" },
+  "g-iota": { "prefix": "@i", "body": "iota", "description": "ι (shortcut)" },
+  "g-kappa": { "prefix": "@k", "body": "kappa", "description": "κ (shortcut)" },
+  "g-lambda": { "prefix": "@l", "body": "lambda", "description": "λ (shortcut)" },
+  "g-mu": { "prefix": "@m", "body": "mu", "description": "μ (shortcut)" },
+  "g-nu": { "prefix": "@n", "body": "nu", "description": "ν (shortcut)" },
+  "g-xi": { "prefix": "@x", "body": "xi", "description": "ξ (shortcut)" },
+  "g-pi": { "prefix": "@p", "body": "pi", "description": "π (shortcut)" },
+  "g-rho": { "prefix": "@r", "body": "rho", "description": "ρ (shortcut)" },
+  "g-sigma": { "prefix": "@s", "body": "sigma", "description": "σ (shortcut)" },
+  "g-tau": { "prefix": "@t", "body": "tau", "description": "τ (shortcut)" },
+  "g-upsilon": { "prefix": "@u", "body": "upsilon", "description": "υ (shortcut)" },
+  "g-phi": { "prefix": "@f", "body": "phi", "description": "φ (shortcut)" },
+  "g-chi": { "prefix": "@c", "body": "chi", "description": "χ (shortcut)" },
+  "g-psi": { "prefix": "@y", "body": "psi", "description": "ψ (shortcut)" },
+  "g-omega": { "prefix": "@w", "body": "omega", "description": "ω (shortcut)" },
+  "G-Gamma": { "prefix": "@G", "body": "Gamma", "description": "Γ (shortcut)" },
+  "G-Delta": { "prefix": "@D", "body": "Delta", "description": "Δ (shortcut)" },
+  "G-Theta": { "prefix": "@T", "body": "Theta", "description": "Θ (shortcut)" },
+  "G-Lambda": { "prefix": "@L", "body": "Lambda", "description": "Λ (shortcut)" },
+  "G-Xi": { "prefix": "@X", "body": "Xi", "description": "Ξ (shortcut)" },
+  "G-Pi": { "prefix": "@P", "body": "Pi", "description": "Π (shortcut)" },
+  "G-Sigma": { "prefix": "@S", "body": "Sigma", "description": "Σ (shortcut)" },
+  "G-Phi": { "prefix": "@F", "body": "Phi", "description": "Φ (shortcut)" },
+  "G-Psi": { "prefix": "@Y", "body": "Psi", "description": "Ψ (shortcut)" },
+  "G-Omega": { "prefix": "@W", "body": "Omega", "description": "Ω (shortcut)" },
+  "image": {
+    "prefix": "img",
+    "body": "#figure(\n  image(\"${1:path}\", width: ${2:80%}),\n  caption: [${3:caption}],\n) <fig:${4:label}>",
+    "description": "Figure with image"
+  },
+  "table": {
+    "prefix": "table",
+    "body": "#table(\n  columns: (${1:1fr, 1fr}),\n  inset: 10pt,\n  align: horizon,\n  [${2:Header 1}], [${3:Header 2}],\n  [${4:Cell 1}], [${5:Cell 2}],\n)",
+    "description": "Simple table"
+  },
+  "list": {
+    "prefix": "list",
+    "body": "- ${1:Item 1}\n- ${2:Item 2}\n- ${3:Item 3}",
+    "description": "Bullet list"
+  },
+  "enum": {
+    "prefix": "enum",
+    "body": "+ ${1:First item}\n+ ${2:Second item}\n+ ${3:Third item}",
+    "description": "Numbered list"
+  }
+}

@@ -12,6 +12,7 @@ import 'frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
 import 'highlighter.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'typst_engine.dart';
 import 'vim_engine.dart';
 
 /// Main entrypoint of the Rust API
@@ -38,8 +39,12 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   /// Initialize flutter_rust_bridge in mock mode.
   /// No libraries for FFI are loaded.
-  static void initMock({required RustLibApi api}) {
-    instance.initMockImpl(api: api);
+  static void initMock({
+    required RustLibApi api,
+  }) {
+    instance.initMockImpl(
+      api: api,
+    );
   }
 
   /// Dispose flutter_rust_bridge
@@ -57,7 +62,9 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
       RustLibWire.fromExternalLibrary;
 
   @override
-  Future<void> executeRustInitializers() async {}
+  Future<void> executeRustInitializers() async {
+    await api.crateApiInitApp();
+  }
 
   @override
   ExternalLibraryLoaderConfig get defaultExternalLibraryLoaderConfig =>
@@ -67,48 +74,65 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -208112774;
+  int get rustContentHash => 1953829046;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
-        stem: 'typink_rust',
-        ioDirectory: '../rust/target/release/',
-        webPrefix: 'pkg/',
-      );
+    stem: 'typink_rust',
+    ioDirectory: '../rust/target/release/',
+    webPrefix: 'pkg/',
+  );
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<Uint8List?> crateApiCompilePdf({
-    required String content,
-    required List<ExtraFile> extraFiles,
-  });
+  Future<Uint8List?> crateApiCompilePdf(
+      {required String content, required List<ExtraFile> extraFiles});
 
-  Future<TypstCompileResult> crateApiCompileTypst({
-    required String content,
-    required List<ExtraFile> extraFiles,
-  });
+  Future<TypstCompileResult> crateApiCompileTypst(
+      {required String content, required List<ExtraFile> extraFiles});
+
+  Future<void> crateApiFrbInitApp();
+
+  Future<List<TypstCompletion>> crateApiGetCompletions(
+      {required String content, required BigInt offsetU16});
 
   String crateApiGetEditorContent();
 
-  EditorView crateApiGetEditorView({
-    required BigInt startLine,
-    required BigInt endLine,
-  });
+  EditorView crateApiGetEditorView(
+      {required BigInt startLine, required BigInt endLine});
+
+  Future<void> crateApiHandleEditorExportPdf({required String path});
+
+  BigInt crateApiHandleEditorGetTotalLines();
+
+  void crateApiHandleEditorInitFonts({required List<FontFileData> fonts});
+
+  void crateApiHandleEditorInitJniSafety();
 
   VimAction? crateApiHandleEditorKey({required String key});
 
-  void crateApiHandleEditorReplaceRange({
-    required BigInt startU16,
-    required BigInt endU16,
-    required String text,
-    BigInt? cursorU16,
-  });
+  Future<String> crateApiHandleEditorLoad({required String path});
+
+  void crateApiHandleEditorReplaceRange(
+      {required BigInt startU16,
+      required BigInt endU16,
+      required String text,
+      BigInt? cursorU16});
+
+  Future<void> crateApiHandleEditorSave({required String path});
+
+  void crateApiHandleEditorSetCursor(
+      {required BigInt line, required BigInt col});
+
+  void crateApiHandleEditorSetVimRegister({required String text});
 
   Future<void> crateApiHandleEditorTriggerHighlight();
 
   void crateApiHandleEditorUpdateSelection({required BigInt cursorU16});
 
   Future<String> crateApiHelloFromRust();
+
+  Future<void> crateApiInitApp();
 
   void crateApiSetEditorContent({required String content});
 }
@@ -122,173 +146,318 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<Uint8List?> crateApiCompilePdf({
-    required String content,
-    required List<ExtraFile> extraFiles,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(content, serializer);
-          sse_encode_list_extra_file(extraFiles, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 1,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_list_prim_u_8_strict,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiCompilePdfConstMeta,
-        argValues: [content, extraFiles],
-        apiImpl: this,
+  Future<Uint8List?> crateApiCompilePdf(
+      {required String content, required List<ExtraFile> extraFiles}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(content, serializer);
+        sse_encode_list_extra_file(extraFiles, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_opt_list_prim_u_8_strict,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiCompilePdfConstMeta,
+      argValues: [content, extraFiles],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiCompilePdfConstMeta => const TaskConstMeta(
-    debugName: "compile_pdf",
-    argNames: ["content", "extraFiles"],
-  );
+        debugName: "compile_pdf",
+        argNames: ["content", "extraFiles"],
+      );
 
   @override
-  Future<TypstCompileResult> crateApiCompileTypst({
-    required String content,
-    required List<ExtraFile> extraFiles,
-  }) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(content, serializer);
-          sse_encode_list_extra_file(extraFiles, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 2,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_typst_compile_result,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiCompileTypstConstMeta,
-        argValues: [content, extraFiles],
-        apiImpl: this,
+  Future<TypstCompileResult> crateApiCompileTypst(
+      {required String content, required List<ExtraFile> extraFiles}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(content, serializer);
+        sse_encode_list_extra_file(extraFiles, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_typst_compile_result,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiCompileTypstConstMeta,
+      argValues: [content, extraFiles],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiCompileTypstConstMeta => const TaskConstMeta(
-    debugName: "compile_typst",
-    argNames: ["content", "extraFiles"],
-  );
+        debugName: "compile_typst",
+        argNames: ["content", "extraFiles"],
+      );
+
+  @override
+  Future<void> crateApiFrbInitApp() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 3, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiFrbInitAppConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiFrbInitAppConstMeta => const TaskConstMeta(
+        debugName: "frb_init_app",
+        argNames: [],
+      );
+
+  @override
+  Future<List<TypstCompletion>> crateApiGetCompletions(
+      {required String content, required BigInt offsetU16}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(content, serializer);
+        sse_encode_usize(offsetU16, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 4, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_typst_completion,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiGetCompletionsConstMeta,
+      argValues: [content, offsetU16],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiGetCompletionsConstMeta => const TaskConstMeta(
+        debugName: "get_completions",
+        argNames: ["content", "offsetU16"],
+      );
 
   @override
   String crateApiGetEditorContent() {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiGetEditorContentConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiGetEditorContentConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiGetEditorContentConstMeta =>
-      const TaskConstMeta(debugName: "get_editor_content", argNames: []);
+  TaskConstMeta get kCrateApiGetEditorContentConstMeta => const TaskConstMeta(
+        debugName: "get_editor_content",
+        argNames: [],
+      );
 
   @override
-  EditorView crateApiGetEditorView({
-    required BigInt startLine,
-    required BigInt endLine,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_usize(startLine, serializer);
-          sse_encode_usize(endLine, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_editor_view,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiGetEditorViewConstMeta,
-        argValues: [startLine, endLine],
-        apiImpl: this,
+  EditorView crateApiGetEditorView(
+      {required BigInt startLine, required BigInt endLine}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_usize(startLine, serializer);
+        sse_encode_usize(endLine, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_editor_view,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiGetEditorViewConstMeta,
+      argValues: [startLine, endLine],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiGetEditorViewConstMeta => const TaskConstMeta(
-    debugName: "get_editor_view",
-    argNames: ["startLine", "endLine"],
-  );
+        debugName: "get_editor_view",
+        argNames: ["startLine", "endLine"],
+      );
+
+  @override
+  Future<void> crateApiHandleEditorExportPdf({required String path}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(path, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 7, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiHandleEditorExportPdfConstMeta,
+      argValues: [path],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorExportPdfConstMeta =>
+      const TaskConstMeta(
+        debugName: "handle_editor_export_pdf",
+        argNames: ["path"],
+      );
+
+  @override
+  BigInt crateApiHandleEditorGetTotalLines() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_usize,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiHandleEditorGetTotalLinesConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorGetTotalLinesConstMeta =>
+      const TaskConstMeta(
+        debugName: "handle_editor_get_total_lines",
+        argNames: [],
+      );
+
+  @override
+  void crateApiHandleEditorInitFonts({required List<FontFileData> fonts}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_font_file_data(fonts, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiHandleEditorInitFontsConstMeta,
+      argValues: [fonts],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorInitFontsConstMeta =>
+      const TaskConstMeta(
+        debugName: "handle_editor_init_fonts",
+        argNames: ["fonts"],
+      );
+
+  @override
+  void crateApiHandleEditorInitJniSafety() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiHandleEditorInitJniSafetyConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorInitJniSafetyConstMeta =>
+      const TaskConstMeta(
+        debugName: "handle_editor_init_jni_safety",
+        argNames: [],
+      );
 
   @override
   VimAction? crateApiHandleEditorKey({required String key}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(key, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_opt_box_autoadd_vim_action,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiHandleEditorKeyConstMeta,
-        argValues: [key],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(key, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_opt_box_autoadd_vim_action,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiHandleEditorKeyConstMeta,
+      argValues: [key],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiHandleEditorKeyConstMeta =>
-      const TaskConstMeta(debugName: "handle_editor_key", argNames: ["key"]);
+  TaskConstMeta get kCrateApiHandleEditorKeyConstMeta => const TaskConstMeta(
+        debugName: "handle_editor_key",
+        argNames: ["key"],
+      );
 
   @override
-  void crateApiHandleEditorReplaceRange({
-    required BigInt startU16,
-    required BigInt endU16,
-    required String text,
-    BigInt? cursorU16,
-  }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_usize(startU16, serializer);
-          sse_encode_usize(endU16, serializer);
-          sse_encode_String(text, serializer);
-          sse_encode_opt_box_autoadd_usize(cursorU16, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiHandleEditorReplaceRangeConstMeta,
-        argValues: [startU16, endU16, text, cursorU16],
-        apiImpl: this,
+  Future<String> crateApiHandleEditorLoad({required String path}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(path, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 12, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: sse_decode_String,
       ),
-    );
+      constMeta: kCrateApiHandleEditorLoadConstMeta,
+      argValues: [path],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorLoadConstMeta => const TaskConstMeta(
+        debugName: "handle_editor_load",
+        argNames: ["path"],
+      );
+
+  @override
+  void crateApiHandleEditorReplaceRange(
+      {required BigInt startU16,
+      required BigInt endU16,
+      required String text,
+      BigInt? cursorU16}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_usize(startU16, serializer);
+        sse_encode_usize(endU16, serializer);
+        sse_encode_String(text, serializer);
+        sse_encode_opt_box_autoadd_usize(cursorU16, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiHandleEditorReplaceRangeConstMeta,
+      argValues: [startU16, endU16, text, cursorU16],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiHandleEditorReplaceRangeConstMeta =>
@@ -298,27 +467,95 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiHandleEditorTriggerHighlight() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 7,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiHandleEditorTriggerHighlightConstMeta,
-        argValues: [],
-        apiImpl: this,
+  Future<void> crateApiHandleEditorSave({required String path}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(path, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 14, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_String,
       ),
-    );
+      constMeta: kCrateApiHandleEditorSaveConstMeta,
+      argValues: [path],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorSaveConstMeta => const TaskConstMeta(
+        debugName: "handle_editor_save",
+        argNames: ["path"],
+      );
+
+  @override
+  void crateApiHandleEditorSetCursor(
+      {required BigInt line, required BigInt col}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_usize(line, serializer);
+        sse_encode_usize(col, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiHandleEditorSetCursorConstMeta,
+      argValues: [line, col],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorSetCursorConstMeta =>
+      const TaskConstMeta(
+        debugName: "handle_editor_set_cursor",
+        argNames: ["line", "col"],
+      );
+
+  @override
+  void crateApiHandleEditorSetVimRegister({required String text}) {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(text, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiHandleEditorSetVimRegisterConstMeta,
+      argValues: [text],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiHandleEditorSetVimRegisterConstMeta =>
+      const TaskConstMeta(
+        debugName: "handle_editor_set_vim_register",
+        argNames: ["text"],
+      );
+
+  @override
+  Future<void> crateApiHandleEditorTriggerHighlight() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 17, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiHandleEditorTriggerHighlightConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiHandleEditorTriggerHighlightConstMeta =>
@@ -329,22 +566,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   void crateApiHandleEditorUpdateSelection({required BigInt cursorU16}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_usize(cursorU16, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiHandleEditorUpdateSelectionConstMeta,
-        argValues: [cursorU16],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_usize(cursorU16, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiHandleEditorUpdateSelectionConstMeta,
+      argValues: [cursorU16],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiHandleEditorUpdateSelectionConstMeta =>
@@ -355,55 +590,72 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<String> crateApiHelloFromRust() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 9,
-            port: port_,
-          );
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiHelloFromRustConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 19, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiHelloFromRustConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
-  TaskConstMeta get kCrateApiHelloFromRustConstMeta =>
-      const TaskConstMeta(debugName: "hello_from_rust", argNames: []);
+  TaskConstMeta get kCrateApiHelloFromRustConstMeta => const TaskConstMeta(
+        debugName: "hello_from_rust",
+        argNames: [],
+      );
+
+  @override
+  Future<void> crateApiInitApp() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 20, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiInitAppConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiInitAppConstMeta => const TaskConstMeta(
+        debugName: "init_app",
+        argNames: [],
+      );
 
   @override
   void crateApiSetEditorContent({required String content}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(content, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSetEditorContentConstMeta,
-        argValues: [content],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(content, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiSetEditorContentConstMeta,
+      argValues: [content],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiSetEditorContentConstMeta => const TaskConstMeta(
-    debugName: "set_editor_content",
-    argNames: ["content"],
-  );
+        debugName: "set_editor_content",
+        argNames: ["content"],
+      );
 
   @protected
   String dco_decode_String(dynamic raw) {
@@ -415,6 +667,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  int dco_decode_box_autoadd_u_8(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -439,14 +697,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   EditorView dco_decode_editor_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return EditorView(
       lines: dco_decode_list_render_line(arr[0]),
-      cursorLine: dco_decode_usize(arr[1]),
-      cursorColumnU16: dco_decode_usize(arr[2]),
-      cursorGlobalU16: dco_decode_usize(arr[3]),
-      mode: dco_decode_vim_mode(arr[4]),
+      startLine: dco_decode_usize(arr[1]),
+      cursorLine: dco_decode_usize(arr[2]),
+      cursorColumnU16: dco_decode_usize(arr[3]),
+      cursorGlobalU16: dco_decode_usize(arr[4]),
+      selectionStartLine: dco_decode_opt_box_autoadd_usize(arr[5]),
+      selectionStartColumnU16: dco_decode_opt_box_autoadd_usize(arr[6]),
+      mode: dco_decode_vim_mode(arr[7]),
+      commandText: dco_decode_opt_String(arr[8]),
+      searchQuery: dco_decode_opt_String(arr[9]),
+      signal: dco_decode_opt_String(arr[10]),
+      yankText: dco_decode_opt_String(arr[11]),
     );
   }
 
@@ -463,15 +728,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FontFileData dco_decode_font_file_data(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return FontFileData(
+      path: dco_decode_String(arr[0]),
+      bytes: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
   HighlightSpan dco_decode_highlight_span(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return HighlightSpan(
       start: dco_decode_usize(arr[0]),
       end: dco_decode_usize(arr[1]),
       label: dco_decode_String(arr[2]),
+      bold: dco_decode_bool(arr[3]),
+      italic: dco_decode_bool(arr[4]),
+      headingLevel: dco_decode_opt_box_autoadd_u_8(arr[5]),
     );
   }
 
@@ -482,9 +762,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
   List<ExtraFile> dco_decode_list_extra_file(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_extra_file).toList();
+  }
+
+  @protected
+  List<FontFileData> dco_decode_list_font_file_data(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_font_file_data).toList();
   }
 
   @protected
@@ -506,9 +798,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<TypstError> dco_decode_list_typst_error(dynamic raw) {
+  List<TypstCompletion> dco_decode_list_typst_completion(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>).map(dco_decode_typst_error).toList();
+    return (raw as List<dynamic>).map(dco_decode_typst_completion).toList();
+  }
+
+  @protected
+  List<TypstDiagnostic> dco_decode_list_typst_diagnostic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_typst_diagnostic).toList();
   }
 
   @protected
@@ -521,6 +819,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_8(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_8(raw);
   }
 
   @protected
@@ -542,6 +846,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String>? dco_decode_opt_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_String(raw);
+  }
+
+  @protected
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_list_prim_u_8_strict(raw);
@@ -551,13 +861,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RenderLine dco_decode_render_line(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return RenderLine(
       text: dco_decode_String(arr[0]),
       spans: dco_decode_list_highlight_span(arr[1]),
       isComposing: dco_decode_bool(arr[2]),
       startU16: dco_decode_usize(arr[3]),
+      endU16: dco_decode_usize(arr[4]),
     );
   }
 
@@ -569,20 +880,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return TypstCompileResult(
       pages: dco_decode_list_typst_page(arr[0]),
-      errors: dco_decode_list_typst_error(arr[1]),
+      diagnostics: dco_decode_list_typst_diagnostic(arr[1]),
     );
   }
 
   @protected
-  TypstError dco_decode_typst_error(dynamic raw) {
+  TypstCompletion dco_decode_typst_completion(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
-    return TypstError(
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return TypstCompletion(
+      label: dco_decode_String(arr[0]),
+      apply: dco_decode_opt_String(arr[1]),
+      detail: dco_decode_opt_String(arr[2]),
+      kind: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
+  TypstDiagnostic dco_decode_typst_diagnostic(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return TypstDiagnostic(
       message: dco_decode_String(arr[0]),
       line: dco_decode_u_32(arr[1]),
       column: dco_decode_u_32(arr[2]),
+      severity: dco_decode_u_32(arr[3]),
     );
   }
 
@@ -592,7 +918,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final arr = raw as List<dynamic>;
     if (arr.length != 1)
       throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return TypstPage(image: dco_decode_list_prim_u_8_strict(arr[0]));
+    return TypstPage(
+      image: dco_decode_list_prim_u_8_strict(arr[0]),
+    );
   }
 
   @protected
@@ -623,8 +951,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   VimAction dco_decode_vim_action(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return VimAction(
       mode: dco_decode_vim_mode(arr[0]),
       cursorLine: dco_decode_usize(arr[1]),
@@ -633,6 +961,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       selectionStartColumn: dco_decode_opt_box_autoadd_usize(arr[4]),
       deleteRange: dco_decode_opt_box_autoadd_vim_range(arr[5]),
       insertText: dco_decode_opt_String(arr[6]),
+      commandText: dco_decode_opt_String(arr[7]),
+      replayKeys: dco_decode_opt_list_String(arr[8]),
+      signal: dco_decode_opt_String(arr[9]),
+      yankText: dco_decode_opt_String(arr[10]),
     );
   }
 
@@ -670,6 +1002,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int sse_decode_box_autoadd_u_8(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_8(deserializer));
+  }
+
+  @protected
   BigInt sse_decode_box_autoadd_usize(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_usize(deserializer));
@@ -691,17 +1029,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   EditorView sse_decode_editor_view(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_lines = sse_decode_list_render_line(deserializer);
+    var var_startLine = sse_decode_usize(deserializer);
     var var_cursorLine = sse_decode_usize(deserializer);
     var var_cursorColumnU16 = sse_decode_usize(deserializer);
     var var_cursorGlobalU16 = sse_decode_usize(deserializer);
+    var var_selectionStartLine = sse_decode_opt_box_autoadd_usize(deserializer);
+    var var_selectionStartColumnU16 =
+        sse_decode_opt_box_autoadd_usize(deserializer);
     var var_mode = sse_decode_vim_mode(deserializer);
+    var var_commandText = sse_decode_opt_String(deserializer);
+    var var_searchQuery = sse_decode_opt_String(deserializer);
+    var var_signal = sse_decode_opt_String(deserializer);
+    var var_yankText = sse_decode_opt_String(deserializer);
     return EditorView(
-      lines: var_lines,
-      cursorLine: var_cursorLine,
-      cursorColumnU16: var_cursorColumnU16,
-      cursorGlobalU16: var_cursorGlobalU16,
-      mode: var_mode,
-    );
+        lines: var_lines,
+        startLine: var_startLine,
+        cursorLine: var_cursorLine,
+        cursorColumnU16: var_cursorColumnU16,
+        cursorGlobalU16: var_cursorGlobalU16,
+        selectionStartLine: var_selectionStartLine,
+        selectionStartColumnU16: var_selectionStartColumnU16,
+        mode: var_mode,
+        commandText: var_commandText,
+        searchQuery: var_searchQuery,
+        signal: var_signal,
+        yankText: var_yankText);
   }
 
   @protected
@@ -713,18 +1065,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  FontFileData sse_decode_font_file_data(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_path = sse_decode_String(deserializer);
+    var var_bytes = sse_decode_list_prim_u_8_strict(deserializer);
+    return FontFileData(path: var_path, bytes: var_bytes);
+  }
+
+  @protected
   HighlightSpan sse_decode_highlight_span(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_start = sse_decode_usize(deserializer);
     var var_end = sse_decode_usize(deserializer);
     var var_label = sse_decode_String(deserializer);
-    return HighlightSpan(start: var_start, end: var_end, label: var_label);
+    var var_bold = sse_decode_bool(deserializer);
+    var var_italic = sse_decode_bool(deserializer);
+    var var_headingLevel = sse_decode_opt_box_autoadd_u_8(deserializer);
+    return HighlightSpan(
+        start: var_start,
+        end: var_end,
+        label: var_label,
+        bold: var_bold,
+        italic: var_italic,
+        headingLevel: var_headingLevel);
   }
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -740,9 +1121,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<FontFileData> sse_decode_list_font_file_data(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <FontFileData>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_font_file_data(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<HighlightSpan> sse_decode_list_highlight_span(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
@@ -773,13 +1166,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<TypstError> sse_decode_list_typst_error(SseDeserializer deserializer) {
+  List<TypstCompletion> sse_decode_list_typst_completion(
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <TypstError>[];
+    var ans_ = <TypstCompletion>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(sse_decode_typst_error(deserializer));
+      ans_.add(sse_decode_typst_completion(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<TypstDiagnostic> sse_decode_list_typst_diagnostic(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <TypstDiagnostic>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_typst_diagnostic(deserializer));
     }
     return ans_;
   }
@@ -808,6 +1215,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int? sse_decode_opt_box_autoadd_u_8(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_8(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   BigInt? sse_decode_opt_box_autoadd_usize(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -820,8 +1238,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   VimAction? sse_decode_opt_box_autoadd_vim_action(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
@@ -837,6 +1254,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_vim_range(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  List<String>? sse_decode_opt_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_list_String(deserializer));
     } else {
       return null;
     }
@@ -860,31 +1288,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_spans = sse_decode_list_highlight_span(deserializer);
     var var_isComposing = sse_decode_bool(deserializer);
     var var_startU16 = sse_decode_usize(deserializer);
+    var var_endU16 = sse_decode_usize(deserializer);
     return RenderLine(
-      text: var_text,
-      spans: var_spans,
-      isComposing: var_isComposing,
-      startU16: var_startU16,
-    );
+        text: var_text,
+        spans: var_spans,
+        isComposing: var_isComposing,
+        startU16: var_startU16,
+        endU16: var_endU16);
   }
 
   @protected
   TypstCompileResult sse_decode_typst_compile_result(
-    SseDeserializer deserializer,
-  ) {
+      SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_pages = sse_decode_list_typst_page(deserializer);
-    var var_errors = sse_decode_list_typst_error(deserializer);
-    return TypstCompileResult(pages: var_pages, errors: var_errors);
+    var var_diagnostics = sse_decode_list_typst_diagnostic(deserializer);
+    return TypstCompileResult(pages: var_pages, diagnostics: var_diagnostics);
   }
 
   @protected
-  TypstError sse_decode_typst_error(SseDeserializer deserializer) {
+  TypstCompletion sse_decode_typst_completion(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_label = sse_decode_String(deserializer);
+    var var_apply = sse_decode_opt_String(deserializer);
+    var var_detail = sse_decode_opt_String(deserializer);
+    var var_kind = sse_decode_String(deserializer);
+    return TypstCompletion(
+        label: var_label, apply: var_apply, detail: var_detail, kind: var_kind);
+  }
+
+  @protected
+  TypstDiagnostic sse_decode_typst_diagnostic(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_message = sse_decode_String(deserializer);
     var var_line = sse_decode_u_32(deserializer);
     var var_column = sse_decode_u_32(deserializer);
-    return TypstError(message: var_message, line: var_line, column: var_column);
+    var var_severity = sse_decode_u_32(deserializer);
+    return TypstDiagnostic(
+        message: var_message,
+        line: var_line,
+        column: var_column,
+        severity: var_severity);
   }
 
   @protected
@@ -924,20 +1368,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_cursorLine = sse_decode_usize(deserializer);
     var var_cursorColumn = sse_decode_usize(deserializer);
     var var_selectionStartLine = sse_decode_opt_box_autoadd_usize(deserializer);
-    var var_selectionStartColumn = sse_decode_opt_box_autoadd_usize(
-      deserializer,
-    );
+    var var_selectionStartColumn =
+        sse_decode_opt_box_autoadd_usize(deserializer);
     var var_deleteRange = sse_decode_opt_box_autoadd_vim_range(deserializer);
     var var_insertText = sse_decode_opt_String(deserializer);
+    var var_commandText = sse_decode_opt_String(deserializer);
+    var var_replayKeys = sse_decode_opt_list_String(deserializer);
+    var var_signal = sse_decode_opt_String(deserializer);
+    var var_yankText = sse_decode_opt_String(deserializer);
     return VimAction(
-      mode: var_mode,
-      cursorLine: var_cursorLine,
-      cursorColumn: var_cursorColumn,
-      selectionStartLine: var_selectionStartLine,
-      selectionStartColumn: var_selectionStartColumn,
-      deleteRange: var_deleteRange,
-      insertText: var_insertText,
-    );
+        mode: var_mode,
+        cursorLine: var_cursorLine,
+        cursorColumn: var_cursorColumn,
+        selectionStartLine: var_selectionStartLine,
+        selectionStartColumn: var_selectionStartColumn,
+        deleteRange: var_deleteRange,
+        insertText: var_insertText,
+        commandText: var_commandText,
+        replayKeys: var_replayKeys,
+        signal: var_signal,
+        yankText: var_yankText);
   }
 
   @protected
@@ -955,11 +1405,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_endLine = sse_decode_usize(deserializer);
     var var_endColumn = sse_decode_usize(deserializer);
     return VimRange(
-      startLine: var_startLine,
-      startColumn: var_startColumn,
-      endLine: var_endLine,
-      endColumn: var_endColumn,
-    );
+        startLine: var_startLine,
+        startColumn: var_startColumn,
+        endLine: var_endLine,
+        endColumn: var_endColumn);
   }
 
   @protected
@@ -975,6 +1424,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_u_8(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_8(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_usize(BigInt self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(self, serializer);
@@ -982,18 +1437,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_box_autoadd_vim_action(
-    VimAction self,
-    SseSerializer serializer,
-  ) {
+      VimAction self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_vim_action(self, serializer);
   }
 
   @protected
   void sse_encode_box_autoadd_vim_range(
-    VimRange self,
-    SseSerializer serializer,
-  ) {
+      VimRange self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_vim_range(self, serializer);
   }
@@ -1002,10 +1453,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_editor_view(EditorView self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_render_line(self.lines, serializer);
+    sse_encode_usize(self.startLine, serializer);
     sse_encode_usize(self.cursorLine, serializer);
     sse_encode_usize(self.cursorColumnU16, serializer);
     sse_encode_usize(self.cursorGlobalU16, serializer);
+    sse_encode_opt_box_autoadd_usize(self.selectionStartLine, serializer);
+    sse_encode_opt_box_autoadd_usize(self.selectionStartColumnU16, serializer);
     sse_encode_vim_mode(self.mode, serializer);
+    sse_encode_opt_String(self.commandText, serializer);
+    sse_encode_opt_String(self.searchQuery, serializer);
+    sse_encode_opt_String(self.signal, serializer);
+    sse_encode_opt_String(self.yankText, serializer);
   }
 
   @protected
@@ -1016,11 +1474,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_font_file_data(FontFileData self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_list_prim_u_8_strict(self.bytes, serializer);
+  }
+
+  @protected
   void sse_encode_highlight_span(HighlightSpan self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(self.start, serializer);
     sse_encode_usize(self.end, serializer);
     sse_encode_String(self.label, serializer);
+    sse_encode_bool(self.bold, serializer);
+    sse_encode_bool(self.italic, serializer);
+    sse_encode_opt_box_autoadd_u_8(self.headingLevel, serializer);
   }
 
   @protected
@@ -1030,10 +1498,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_extra_file(
-    List<ExtraFile> self,
-    SseSerializer serializer,
-  ) {
+      List<ExtraFile> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1042,10 +1517,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_font_file_data(
+      List<FontFileData> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_font_file_data(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_highlight_span(
-    List<HighlightSpan> self,
-    SseSerializer serializer,
-  ) {
+      List<HighlightSpan> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1055,9 +1538,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_list_prim_u_8_strict(
-    Uint8List self,
-    SseSerializer serializer,
-  ) {
+      Uint8List self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
@@ -1065,9 +1546,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_list_render_line(
-    List<RenderLine> self,
-    SseSerializer serializer,
-  ) {
+      List<RenderLine> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1076,22 +1555,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_typst_error(
-    List<TypstError> self,
-    SseSerializer serializer,
-  ) {
+  void sse_encode_list_typst_completion(
+      List<TypstCompletion> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_typst_error(item, serializer);
+      sse_encode_typst_completion(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_typst_diagnostic(
+      List<TypstDiagnostic> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_typst_diagnostic(item, serializer);
     }
   }
 
   @protected
   void sse_encode_list_typst_page(
-    List<TypstPage> self,
-    SseSerializer serializer,
-  ) {
+      List<TypstPage> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
@@ -1110,10 +1595,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_u_8(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_8(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_usize(
-    BigInt? self,
-    SseSerializer serializer,
-  ) {
+      BigInt? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
@@ -1124,9 +1617,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_opt_box_autoadd_vim_action(
-    VimAction? self,
-    SseSerializer serializer,
-  ) {
+      VimAction? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
@@ -1137,9 +1628,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_opt_box_autoadd_vim_range(
-    VimRange? self,
-    SseSerializer serializer,
-  ) {
+      VimRange? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
@@ -1149,10 +1638,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_list_String(
+      List<String>? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_String(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_list_prim_u_8_strict(
-    Uint8List? self,
-    SseSerializer serializer,
-  ) {
+      Uint8List? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     sse_encode_bool(self != null, serializer);
@@ -1168,24 +1666,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_highlight_span(self.spans, serializer);
     sse_encode_bool(self.isComposing, serializer);
     sse_encode_usize(self.startU16, serializer);
+    sse_encode_usize(self.endU16, serializer);
   }
 
   @protected
   void sse_encode_typst_compile_result(
-    TypstCompileResult self,
-    SseSerializer serializer,
-  ) {
+      TypstCompileResult self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_typst_page(self.pages, serializer);
-    sse_encode_list_typst_error(self.errors, serializer);
+    sse_encode_list_typst_diagnostic(self.diagnostics, serializer);
   }
 
   @protected
-  void sse_encode_typst_error(TypstError self, SseSerializer serializer) {
+  void sse_encode_typst_completion(
+      TypstCompletion self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.label, serializer);
+    sse_encode_opt_String(self.apply, serializer);
+    sse_encode_opt_String(self.detail, serializer);
+    sse_encode_String(self.kind, serializer);
+  }
+
+  @protected
+  void sse_encode_typst_diagnostic(
+      TypstDiagnostic self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.message, serializer);
     sse_encode_u_32(self.line, serializer);
     sse_encode_u_32(self.column, serializer);
+    sse_encode_u_32(self.severity, serializer);
   }
 
   @protected
@@ -1227,6 +1736,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_usize(self.selectionStartColumn, serializer);
     sse_encode_opt_box_autoadd_vim_range(self.deleteRange, serializer);
     sse_encode_opt_String(self.insertText, serializer);
+    sse_encode_opt_String(self.commandText, serializer);
+    sse_encode_opt_list_String(self.replayKeys, serializer);
+    sse_encode_opt_String(self.signal, serializer);
+    sse_encode_opt_String(self.yankText, serializer);
   }
 
   @protected

@@ -23,6 +23,21 @@ class SettingsPanel extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _SectionTitle(title: 'Application Theme'),
+          DropdownButtonFormField<AppThemeMode>(
+            value: settings.theme,
+            decoration: const InputDecoration(labelText: 'Theme'),
+            items: AppThemeMode.values.map((mode) {
+              return DropdownMenuItem(
+                value: mode, 
+                child: Text(mode.name[0].toUpperCase() + mode.name.substring(1)),
+              );
+            }).toList(),
+            onChanged: (val) {
+              if (val != null) notifier.setTheme(val);
+            },
+          ),
+          const Divider(height: 32),
           _SectionTitle(title: 'Preview Options'),
           SwitchListTile(
             title: const Text('Horizontal Page Flipping'),
@@ -32,6 +47,12 @@ class SettingsPanel extends ConsumerWidget {
           ),
           const Divider(height: 32),
           _SectionTitle(title: 'Editor Environment'),
+          SwitchListTile(
+            title: const Text('Vim Mode'),
+            subtitle: const Text('Enable modal editing (Normal/Insert modes)'),
+            value: settings.vimEnabled,
+            onChanged: (value) => notifier.toggleVimEnabled(),
+          ),
           SwitchListTile(
             title: const Text('Relative Line Numbers'),
             subtitle: const Text('Show line numbers relative to cursor'),
@@ -121,17 +142,37 @@ class SettingsPanel extends ConsumerWidget {
           _SectionTitle(title: 'Fonts'),
           DropdownButtonFormField<String>(
             value: settings.activeFont,
-            decoration: const InputDecoration(labelText: 'Active Font'),
+            decoration: const InputDecoration(labelText: 'Preview Font (Typst)'),
             items: [
               'IBM Plex Sans',
               'Moralerspace Argon',
+              'Inter',
               settings.activeFont,
               ...settings.customFontPaths.map((path) => p.basenameWithoutExtension(path)),
-            ].toSet().map((font) { // Ensure unique font names
+            ].toSet().map((font) {
               return DropdownMenuItem(value: font, child: Text(font));
             }).toList(),
             onChanged: (val) {
               if (val != null) notifier.setActiveFont(val);
+            },
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: settings.editorFont,
+            decoration: const InputDecoration(labelText: 'Editor Font'),
+            items: [
+              'Moralerspace Argon',
+              'IBM Plex Mono',
+              'Fira Code',
+              'JetBrains Mono',
+              'Inter',
+              settings.editorFont,
+              ...settings.customFontPaths.map((path) => p.basenameWithoutExtension(path)),
+            ].toSet().map((font) {
+              return DropdownMenuItem(value: font, child: Text(font));
+            }).toList(),
+            onChanged: (val) {
+              if (val != null) notifier.setEditorFont(val);
             },
           ),
           const SizedBox(height: 16),

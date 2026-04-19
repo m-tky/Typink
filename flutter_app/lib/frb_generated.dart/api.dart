@@ -7,56 +7,76 @@ import 'editor.dart';
 import 'frb_generated.dart';
 import 'highlighter.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'typst_engine.dart';
 import 'vim_engine.dart';
+
+// These functions are ignored because they are not marked as `pub`: `init_rust`, `lock_editor`
 
 Future<String> helloFromRust() => RustLib.instance.api.crateApiHelloFromRust();
 
-Future<TypstCompileResult> compileTypst({
-  required String content,
-  required List<ExtraFile> extraFiles,
-}) => RustLib.instance.api.crateApiCompileTypst(
-  content: content,
-  extraFiles: extraFiles,
-);
+Future<TypstCompileResult> compileTypst(
+        {required String content, required List<ExtraFile> extraFiles}) =>
+    RustLib.instance.api
+        .crateApiCompileTypst(content: content, extraFiles: extraFiles);
 
-Future<Uint8List?> compilePdf({
-  required String content,
-  required List<ExtraFile> extraFiles,
-}) => RustLib.instance.api.crateApiCompilePdf(
-  content: content,
-  extraFiles: extraFiles,
-);
+Future<Uint8List?> compilePdf(
+        {required String content, required List<ExtraFile> extraFiles}) =>
+    RustLib.instance.api
+        .crateApiCompilePdf(content: content, extraFiles: extraFiles);
 
-EditorView getEditorView({
-  required BigInt startLine,
-  required BigInt endLine,
-}) => RustLib.instance.api.crateApiGetEditorView(
-  startLine: startLine,
-  endLine: endLine,
-);
+EditorView getEditorView(
+        {required BigInt startLine, required BigInt endLine}) =>
+    RustLib.instance.api
+        .crateApiGetEditorView(startLine: startLine, endLine: endLine);
+
+Future<List<TypstCompletion>> getCompletions(
+        {required String content, required BigInt offsetU16}) =>
+    RustLib.instance.api
+        .crateApiGetCompletions(content: content, offsetU16: offsetU16);
 
 VimAction? handleEditorKey({required String key}) =>
     RustLib.instance.api.crateApiHandleEditorKey(key: key);
 
+void handleEditorSetVimRegister({required String text}) =>
+    RustLib.instance.api.crateApiHandleEditorSetVimRegister(text: text);
+
+void handleEditorInitFonts({required List<FontFileData> fonts}) =>
+    RustLib.instance.api.crateApiHandleEditorInitFonts(fonts: fonts);
+
+Future<void> frbInitApp() => RustLib.instance.api.crateApiFrbInitApp();
+
+void handleEditorInitJniSafety() =>
+    RustLib.instance.api.crateApiHandleEditorInitJniSafety();
+
+BigInt handleEditorGetTotalLines() =>
+    RustLib.instance.api.crateApiHandleEditorGetTotalLines();
+
 Future<void> handleEditorTriggerHighlight() =>
     RustLib.instance.api.crateApiHandleEditorTriggerHighlight();
 
-void handleEditorReplaceRange({
-  required BigInt startU16,
-  required BigInt endU16,
-  required String text,
-  BigInt? cursorU16,
-}) => RustLib.instance.api.crateApiHandleEditorReplaceRange(
-  startU16: startU16,
-  endU16: endU16,
-  text: text,
-  cursorU16: cursorU16,
-);
+Future<void> handleEditorSave({required String path}) =>
+    RustLib.instance.api.crateApiHandleEditorSave(path: path);
 
-void handleEditorUpdateSelection({required BigInt cursorU16}) => RustLib
-    .instance
-    .api
-    .crateApiHandleEditorUpdateSelection(cursorU16: cursorU16);
+Future<String> handleEditorLoad({required String path}) =>
+    RustLib.instance.api.crateApiHandleEditorLoad(path: path);
+
+Future<void> handleEditorExportPdf({required String path}) =>
+    RustLib.instance.api.crateApiHandleEditorExportPdf(path: path);
+
+void handleEditorReplaceRange(
+        {required BigInt startU16,
+        required BigInt endU16,
+        required String text,
+        BigInt? cursorU16}) =>
+    RustLib.instance.api.crateApiHandleEditorReplaceRange(
+        startU16: startU16, endU16: endU16, text: text, cursorU16: cursorU16);
+
+void handleEditorUpdateSelection({required BigInt cursorU16}) =>
+    RustLib.instance.api
+        .crateApiHandleEditorUpdateSelection(cursorU16: cursorU16);
+
+void handleEditorSetCursor({required BigInt line, required BigInt col}) =>
+    RustLib.instance.api.crateApiHandleEditorSetCursor(line: line, col: col);
 
 String getEditorContent() => RustLib.instance.api.crateApiGetEditorContent();
 
@@ -67,7 +87,10 @@ class ExtraFile {
   final String name;
   final Uint8List data;
 
-  const ExtraFile({required this.name, required this.data});
+  const ExtraFile({
+    required this.name,
+    required this.data,
+  });
 
   @override
   int get hashCode => name.hashCode ^ data.hashCode;
@@ -83,12 +106,15 @@ class ExtraFile {
 
 class TypstCompileResult {
   final List<TypstPage> pages;
-  final List<TypstError> errors;
+  final List<TypstDiagnostic> diagnostics;
 
-  const TypstCompileResult({required this.pages, required this.errors});
+  const TypstCompileResult({
+    required this.pages,
+    required this.diagnostics,
+  });
 
   @override
-  int get hashCode => pages.hashCode ^ errors.hashCode;
+  int get hashCode => pages.hashCode ^ diagnostics.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -96,37 +122,71 @@ class TypstCompileResult {
       other is TypstCompileResult &&
           runtimeType == other.runtimeType &&
           pages == other.pages &&
-          errors == other.errors;
+          diagnostics == other.diagnostics;
 }
 
-class TypstError {
-  final String message;
-  final int line;
-  final int column;
+class TypstCompletion {
+  final String label;
+  final String? apply;
+  final String? detail;
+  final String kind;
 
-  const TypstError({
-    required this.message,
-    required this.line,
-    required this.column,
+  const TypstCompletion({
+    required this.label,
+    this.apply,
+    this.detail,
+    required this.kind,
   });
 
   @override
-  int get hashCode => message.hashCode ^ line.hashCode ^ column.hashCode;
+  int get hashCode =>
+      label.hashCode ^ apply.hashCode ^ detail.hashCode ^ kind.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TypstError &&
+      other is TypstCompletion &&
+          runtimeType == other.runtimeType &&
+          label == other.label &&
+          apply == other.apply &&
+          detail == other.detail &&
+          kind == other.kind;
+}
+
+class TypstDiagnostic {
+  final String message;
+  final int line;
+  final int column;
+  final int severity;
+
+  const TypstDiagnostic({
+    required this.message,
+    required this.line,
+    required this.column,
+    required this.severity,
+  });
+
+  @override
+  int get hashCode =>
+      message.hashCode ^ line.hashCode ^ column.hashCode ^ severity.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TypstDiagnostic &&
           runtimeType == other.runtimeType &&
           message == other.message &&
           line == other.line &&
-          column == other.column;
+          column == other.column &&
+          severity == other.severity;
 }
 
 class TypstPage {
   final Uint8List image;
 
-  const TypstPage({required this.image});
+  const TypstPage({
+    required this.image,
+  });
 
   @override
   int get hashCode => image.hashCode;

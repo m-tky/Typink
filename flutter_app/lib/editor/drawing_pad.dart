@@ -239,6 +239,12 @@ class _Toolbar extends ConsumerWidget {
         isSelected: activeTool == DrawingTool.eraser,
         onTap: () => ref.read(activeToolProvider.notifier).state = DrawingTool.eraser,
       ),
+      _ToolButton(
+        icon: Icons.gesture,
+        label: 'Lasso',
+        isSelected: activeTool == DrawingTool.lasso,
+        onTap: () => ref.read(activeToolProvider.notifier).state = DrawingTool.lasso,
+      ),
     ];
     return vertical ? Column(children: children) : Row(children: children);
   }
