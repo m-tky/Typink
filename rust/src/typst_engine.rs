@@ -5,11 +5,17 @@ use std::path::Path;
 use typst::foundations::{Bytes, Datetime};
 use typst::syntax::{FileId, Source};
 use typst::text::{Font, FontBook};
-use typst::Library;
-use typst::World;
 use typst::utils::LazyHash;
+use typst::{Library, LibraryExt, World};
+use typst_ide::IdeWorld;
 use chrono::{Local, Datelike};
 use walkdir::WalkDir;
+
+#[derive(Clone)]
+pub struct FontFileData {
+    pub path: String,
+    pub bytes: Vec<u8>,
+}
 
 pub struct TypinkWorld {
     library: LazyHash<Library>,
@@ -21,7 +27,7 @@ pub struct TypinkWorld {
 }
 
 impl TypinkWorld {
-    pub fn new(main_content: String, extra_files: HashMap<String, Vec<u8>>) -> Self {
+    pub fn new(main_content: String, extra_files: HashMap<String, Vec<u8>>, preloaded_fonts: Vec<FontFileData>) -> Self {
         let library = Library::default();
         let main_id = FileId::new(None, typst::syntax::VirtualPath::new("main.typ"));
         let main_source = Source::new(main_id, main_content);
@@ -47,33 +53,45 @@ impl TypinkWorld {
             }
         }
 
-        // フォントの検索パス (NixOS / Linux 共通 + Bundled Assets)
-        let font_paths = [
-            "/home/user/Code/rust/Typink/flutter_app/assets/fonts",
-            "/run/current-system/sw/share/X11/fonts",
-            "/usr/share/fonts",
-        ];
+        // 1. Process preloaded fonts (Priority for Android assets)
+        for font_file in preloaded_fonts {
+            let bytes = Bytes::new(font_file.bytes);
+            for font in Font::iter(bytes) {
+                book.push(font.info().clone());
+                font_data.push(font);
+            }
+        }
 
-        for (i, path) in font_paths.iter().enumerate() {
-            if !Path::new(path).exists() { continue; }
-            
-            for entry in WalkDir::new(path)
-                .follow_links(true)
-                .into_iter()
-                .filter_map(|e| e.ok())
-                .filter(|e| e.path().extension().map_or(false, |ext| ext == "ttf" || ext == "otf"))
-            {
-                if let Ok(data) = fs::read(entry.path()) {
-                    let bytes = Bytes::new(data);
-                    for font in Font::iter(bytes) {
-                        book.push(font.info().clone());
-                        font_data.push(font);
+        #[cfg(target_os = "linux")]
+        {
+            // フォントの検索パス (NixOS / Linux 共通 + Bundled Assets)
+            let font_paths = [
+                "/home/user/Code/rust/Typink/flutter_app/assets/fonts",
+                "/run/current-system/sw/share/X11/fonts",
+                "/usr/share/fonts",
+            ];
+
+            for (i, path) in font_paths.iter().enumerate() {
+                if !Path::new(path).exists() { continue; }
+                
+                for entry in WalkDir::new(path)
+                    .follow_links(true)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .filter(|e| e.path().extension().map_or(false, |ext| ext == "ttf" || ext == "otf"))
+                {
+                    if let Ok(data) = fs::read(entry.path()) {
+                        let bytes = Bytes::new(data);
+                        for font in Font::iter(bytes) {
+                            book.push(font.info().clone());
+                            font_data.push(font);
+                        }
                     }
+                    // アセットフォルダ(index 0)以外は、起動速度のために合計100個で見切る
+                    if i > 0 && font_data.len() > 100 { break; }
                 }
-                // アセットフォルダ(index 0)以外は、起動速度のために合計100個で見切る
                 if i > 0 && font_data.len() > 100 { break; }
             }
-            if i > 0 && font_data.len() > 100 { break; }
         }
 
         Self {
@@ -107,12 +125,22 @@ impl World for TypinkWorld {
     }
 
     fn source(&self, id: FileId) -> Result<Source, typst::diag::FileError> {
-        self.sources
-            .lock()
-            .unwrap()
-            .get(&id)
-            .cloned()
-            .ok_or_else(|| typst::diag::FileError::NotFound(id.vpath().as_rooted_path().to_path_buf()))
+        let sources = self.sources.lock().unwrap();
+        
+        // 1. Exact match
+        if let Some(source) = sources.get(&id) {
+            return Ok(source.clone());
+        }
+
+        // 2. Case-insensitive fallback
+        let req_path = id.vpath().as_rooted_path().to_string_lossy().to_lowercase();
+        for (stored_id, source) in &*sources {
+            if stored_id.vpath().as_rooted_path().to_string_lossy().to_lowercase() == req_path {
+                return Ok(source.clone());
+            }
+        }
+
+        Err(typst::diag::FileError::NotFound(id.vpath().as_rooted_path().to_path_buf()))
     }
 
     fn font(&self, id: usize) -> Option<Font> {
@@ -120,14 +148,74 @@ impl World for TypinkWorld {
     }
 
     fn file(&self, id: FileId) -> Result<Bytes, typst::diag::FileError> {
-        self.data
-            .get(&id)
-            .cloned()
-            .ok_or_else(|| typst::diag::FileError::NotFound(id.vpath().as_rooted_path().to_path_buf()))
+        // 1. Exact match
+        if let Some(bytes) = self.data.get(&id) {
+            return Ok(bytes.clone());
+        }
+
+        // 2. Full path case-insensitive fallback
+        let req_path = id.vpath().as_rooted_path().to_string_lossy().to_lowercase();
+        for (stored_id, bytes) in &self.data {
+            if stored_id.vpath().as_rooted_path().to_string_lossy().to_lowercase() == req_path {
+                return Ok(bytes.clone());
+            }
+        }
+
+        // 3. Filename-only fallback (extreme resilience)
+        let req_filename = id.vpath().as_rooted_path().file_name()
+            .map(|f| f.to_string_lossy().to_lowercase());
+            
+        if let Some(req_f) = req_filename {
+            for (stored_id, bytes) in &self.data {
+                if let Some(stored_f) = stored_id.vpath().as_rooted_path().file_name() {
+                    if stored_f.to_string_lossy().to_lowercase() == req_f {
+                        return Ok(bytes.clone());
+                    }
+                }
+            }
+        }
+
+        Err(typst::diag::FileError::NotFound(id.vpath().as_rooted_path().to_path_buf()))
     }
 
     fn today(&self, _offset: Option<i64>) -> Option<Datetime> {
         let now = Local::now();
         Datetime::from_ymd(now.year(), now.month() as u8, now.day() as u8)
+    }
+}
+
+impl IdeWorld for TypinkWorld {
+    fn upcast(&self) -> &dyn World {
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vfs_resolution() {
+        let mut extras = HashMap::new();
+        extras.insert("hello/fig_1.svg".to_string(), vec![1, 2, 3]);
+        let world = TypinkWorld::new("".to_string(), extras, Vec::new());
+        
+        // Simulate Typst requesting /hello/fig_1.svg
+        let id = FileId::new(None, typst::syntax::VirtualPath::new("hello/fig_1.svg"));
+        let result = world.file(id);
+        assert!(result.is_ok(), "Failed to resolve hello/fig_1.svg precisely");
+        
+        let id2 = FileId::new(None, typst::syntax::VirtualPath::new("/hello/fig_1.svg"));
+        let result2 = world.file(id2);
+        assert!(result2.is_ok(), "Failed to resolve /hello/fig_1.svg");
+
+        // CROSS-FOLDER CASE: Registered in figures/ but requested in hello/
+        let mut extras2 = HashMap::new();
+        extras2.insert("figures/fig_2.svg".to_string(), vec![4, 5, 6]);
+        let world2 = TypinkWorld::new("".to_string(), extras2, Vec::new());
+        
+        let id3 = FileId::new(None, typst::syntax::VirtualPath::new("hello/fig_2.svg"));
+        let result3 = world2.file(id3);
+        assert!(result3.is_ok(), "Failed to resolve hello/fig_2.svg via fuzzy filename match");
     }
 }

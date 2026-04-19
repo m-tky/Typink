@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -208112774;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1953829046;
 
 // Section: executor
 
@@ -117,6 +117,79 @@ fn wire__crate__api__compile_typst_impl(
         },
     )
 }
+fn wire__crate__api__frb_init_app_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "frb_init_app",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::frb_init_app();
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__get_completions_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "get_completions",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_content = <String>::sse_decode(&mut deserializer);
+            let api_offset_u16 = <usize>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, ()>(
+                    (move || async move {
+                        let output_ok = Result::<_, ()>::Ok(
+                            crate::api::get_completions(api_content, api_offset_u16).await,
+                        )?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__get_editor_content_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -178,6 +251,131 @@ fn wire__crate__api__get_editor_view_impl(
         },
     )
 }
+fn wire__crate__api__handle_editor_export_pdf_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_export_pdf",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_path = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::handle_editor_export_pdf(api_path)?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__handle_editor_get_total_lines_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_get_total_lines",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok(crate::api::handle_editor_get_total_lines())?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__handle_editor_init_fonts_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_init_fonts",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_fonts = <Vec<crate::typst_engine::FontFileData>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok({
+                    crate::api::handle_editor_init_fonts(api_fonts);
+                })?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__handle_editor_init_jni_safety_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_init_jni_safety",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok({
+                    crate::api::handle_editor_init_jni_safety();
+                })?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__handle_editor_key_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -205,6 +403,39 @@ fn wire__crate__api__handle_editor_key_impl(
                 let output_ok = Result::<_, ()>::Ok(crate::api::handle_editor_key(api_key))?;
                 Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__crate__api__handle_editor_load_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_load",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_path = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::handle_editor_load(api_path)?;
+                    Ok(output_ok)
+                })())
+            }
         },
     )
 }
@@ -242,6 +473,104 @@ fn wire__crate__api__handle_editor_replace_range_impl(
                         api_text,
                         api_cursor_u16,
                     );
+                })?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__handle_editor_save_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_save",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_path = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::handle_editor_save(api_path)?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__handle_editor_set_cursor_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_set_cursor",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_line = <usize>::sse_decode(&mut deserializer);
+            let api_col = <usize>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok({
+                    crate::api::handle_editor_set_cursor(api_line, api_col);
+                })?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__handle_editor_set_vim_register_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "handle_editor_set_vim_register",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_text = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok({
+                    crate::api::handle_editor_set_vim_register(api_text);
                 })?;
                 Ok(output_ok)
             })())
@@ -346,6 +675,40 @@ fn wire__crate__api__hello_from_rust_impl(
         },
     )
 }
+fn wire__crate__api__init_app_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "init_app",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::init_app();
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__set_editor_content_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -400,16 +763,30 @@ impl SseDecode for crate::editor::EditorView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_lines = <Vec<crate::editor::RenderLine>>::sse_decode(deserializer);
+        let mut var_startLine = <usize>::sse_decode(deserializer);
         let mut var_cursorLine = <usize>::sse_decode(deserializer);
         let mut var_cursorColumnU16 = <usize>::sse_decode(deserializer);
         let mut var_cursorGlobalU16 = <usize>::sse_decode(deserializer);
+        let mut var_selectionStartLine = <Option<usize>>::sse_decode(deserializer);
+        let mut var_selectionStartColumnU16 = <Option<usize>>::sse_decode(deserializer);
         let mut var_mode = <crate::vim_engine::VimMode>::sse_decode(deserializer);
+        let mut var_commandText = <Option<String>>::sse_decode(deserializer);
+        let mut var_searchQuery = <Option<String>>::sse_decode(deserializer);
+        let mut var_signal = <Option<String>>::sse_decode(deserializer);
+        let mut var_yankText = <Option<String>>::sse_decode(deserializer);
         return crate::editor::EditorView {
             lines: var_lines,
+            start_line: var_startLine,
             cursor_line: var_cursorLine,
             cursor_column_u16: var_cursorColumnU16,
             cursor_global_u16: var_cursorGlobalU16,
+            selection_start_line: var_selectionStartLine,
+            selection_start_column_u16: var_selectionStartColumnU16,
             mode: var_mode,
+            command_text: var_commandText,
+            search_query: var_searchQuery,
+            signal: var_signal,
+            yank_text: var_yankText,
         };
     }
 }
@@ -426,16 +803,34 @@ impl SseDecode for crate::api::ExtraFile {
     }
 }
 
+impl SseDecode for crate::typst_engine::FontFileData {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_bytes = <Vec<u8>>::sse_decode(deserializer);
+        return crate::typst_engine::FontFileData {
+            path: var_path,
+            bytes: var_bytes,
+        };
+    }
+}
+
 impl SseDecode for crate::highlighter::HighlightSpan {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_start = <usize>::sse_decode(deserializer);
         let mut var_end = <usize>::sse_decode(deserializer);
         let mut var_label = <String>::sse_decode(deserializer);
+        let mut var_bold = <bool>::sse_decode(deserializer);
+        let mut var_italic = <bool>::sse_decode(deserializer);
+        let mut var_headingLevel = <Option<u8>>::sse_decode(deserializer);
         return crate::highlighter::HighlightSpan {
             start: var_start,
             end: var_end,
             label: var_label,
+            bold: var_bold,
+            italic: var_italic,
+            heading_level: var_headingLevel,
         };
     }
 }
@@ -447,6 +842,18 @@ impl SseDecode for i32 {
     }
 }
 
+impl SseDecode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<String>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::ExtraFile> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -454,6 +861,20 @@ impl SseDecode for Vec<crate::api::ExtraFile> {
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
             ans_.push(<crate::api::ExtraFile>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::typst_engine::FontFileData> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::typst_engine::FontFileData>::sse_decode(
+                deserializer,
+            ));
         }
         return ans_;
     }
@@ -497,13 +918,25 @@ impl SseDecode for Vec<crate::editor::RenderLine> {
     }
 }
 
-impl SseDecode for Vec<crate::api::TypstError> {
+impl SseDecode for Vec<crate::api::TypstCompletion> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
-            ans_.push(<crate::api::TypstError>::sse_decode(deserializer));
+            ans_.push(<crate::api::TypstCompletion>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::TypstDiagnostic> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::TypstDiagnostic>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -526,6 +959,17 @@ impl SseDecode for Option<String> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<String>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<u8> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<u8>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -565,6 +1009,17 @@ impl SseDecode for Option<crate::vim_engine::VimRange> {
     }
 }
 
+impl SseDecode for Option<Vec<String>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<Vec<String>>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<Vec<u8>> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -583,11 +1038,13 @@ impl SseDecode for crate::editor::RenderLine {
         let mut var_spans = <Vec<crate::highlighter::HighlightSpan>>::sse_decode(deserializer);
         let mut var_isComposing = <bool>::sse_decode(deserializer);
         let mut var_startU16 = <usize>::sse_decode(deserializer);
+        let mut var_endU16 = <usize>::sse_decode(deserializer);
         return crate::editor::RenderLine {
             text: var_text,
             spans: var_spans,
             is_composing: var_isComposing,
             start_u16: var_startU16,
+            end_u16: var_endU16,
         };
     }
 }
@@ -596,24 +1053,42 @@ impl SseDecode for crate::api::TypstCompileResult {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_pages = <Vec<crate::api::TypstPage>>::sse_decode(deserializer);
-        let mut var_errors = <Vec<crate::api::TypstError>>::sse_decode(deserializer);
+        let mut var_diagnostics = <Vec<crate::api::TypstDiagnostic>>::sse_decode(deserializer);
         return crate::api::TypstCompileResult {
             pages: var_pages,
-            errors: var_errors,
+            diagnostics: var_diagnostics,
         };
     }
 }
 
-impl SseDecode for crate::api::TypstError {
+impl SseDecode for crate::api::TypstCompletion {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_label = <String>::sse_decode(deserializer);
+        let mut var_apply = <Option<String>>::sse_decode(deserializer);
+        let mut var_detail = <Option<String>>::sse_decode(deserializer);
+        let mut var_kind = <String>::sse_decode(deserializer);
+        return crate::api::TypstCompletion {
+            label: var_label,
+            apply: var_apply,
+            detail: var_detail,
+            kind: var_kind,
+        };
+    }
+}
+
+impl SseDecode for crate::api::TypstDiagnostic {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_message = <String>::sse_decode(deserializer);
         let mut var_line = <u32>::sse_decode(deserializer);
         let mut var_column = <u32>::sse_decode(deserializer);
-        return crate::api::TypstError {
+        let mut var_severity = <u32>::sse_decode(deserializer);
+        return crate::api::TypstDiagnostic {
             message: var_message,
             line: var_line,
             column: var_column,
+            severity: var_severity,
         };
     }
 }
@@ -662,6 +1137,10 @@ impl SseDecode for crate::vim_engine::VimAction {
         let mut var_selectionStartColumn = <Option<usize>>::sse_decode(deserializer);
         let mut var_deleteRange = <Option<crate::vim_engine::VimRange>>::sse_decode(deserializer);
         let mut var_insertText = <Option<String>>::sse_decode(deserializer);
+        let mut var_commandText = <Option<String>>::sse_decode(deserializer);
+        let mut var_replayKeys = <Option<Vec<String>>>::sse_decode(deserializer);
+        let mut var_signal = <Option<String>>::sse_decode(deserializer);
+        let mut var_yankText = <Option<String>>::sse_decode(deserializer);
         return crate::vim_engine::VimAction {
             mode: var_mode,
             cursor_line: var_cursorLine,
@@ -670,6 +1149,10 @@ impl SseDecode for crate::vim_engine::VimAction {
             selection_start_column: var_selectionStartColumn,
             delete_range: var_deleteRange,
             insert_text: var_insertText,
+            command_text: var_commandText,
+            replay_keys: var_replayKeys,
+            signal: var_signal,
+            yank_text: var_yankText,
         };
     }
 }
@@ -682,6 +1165,11 @@ impl SseDecode for crate::vim_engine::VimMode {
             0 => crate::vim_engine::VimMode::Normal,
             1 => crate::vim_engine::VimMode::Insert,
             2 => crate::vim_engine::VimMode::Visual,
+            3 => crate::vim_engine::VimMode::VisualLine,
+            4 => crate::vim_engine::VimMode::Search,
+            5 => crate::vim_engine::VimMode::Command,
+            6 => crate::vim_engine::VimMode::VisualBlock,
+            7 => crate::vim_engine::VimMode::Replace,
             _ => unreachable!("Invalid variant for VimMode: {}", inner),
         };
     }
@@ -714,13 +1202,19 @@ fn pde_ffi_dispatcher_primary_impl(
     match func_id {
         1 => wire__crate__api__compile_pdf_impl(port, ptr, rust_vec_len, data_len),
         2 => wire__crate__api__compile_typst_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__handle_editor_trigger_highlight_impl(
+        3 => wire__crate__api__frb_init_app_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__get_completions_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__handle_editor_export_pdf_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__handle_editor_load_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__handle_editor_save_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__handle_editor_trigger_highlight_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        9 => wire__crate__api__hello_from_rust_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__hello_from_rust_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -733,12 +1227,17 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        3 => wire__crate__api__get_editor_content_impl(ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__get_editor_view_impl(ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__handle_editor_key_impl(ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__handle_editor_replace_range_impl(ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__handle_editor_update_selection_impl(ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__set_editor_content_impl(ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__get_editor_content_impl(ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__get_editor_view_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__handle_editor_get_total_lines_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__handle_editor_init_fonts_impl(ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__handle_editor_init_jni_safety_impl(ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__handle_editor_key_impl(ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__handle_editor_replace_range_impl(ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__handle_editor_set_cursor_impl(ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__handle_editor_set_vim_register_impl(ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__handle_editor_update_selection_impl(ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__set_editor_content_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -750,10 +1249,17 @@ impl flutter_rust_bridge::IntoDart for crate::editor::EditorView {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.lines.into_into_dart().into_dart(),
+            self.start_line.into_into_dart().into_dart(),
             self.cursor_line.into_into_dart().into_dart(),
             self.cursor_column_u16.into_into_dart().into_dart(),
             self.cursor_global_u16.into_into_dart().into_dart(),
+            self.selection_start_line.into_into_dart().into_dart(),
+            self.selection_start_column_u16.into_into_dart().into_dart(),
             self.mode.into_into_dart().into_dart(),
+            self.command_text.into_into_dart().into_dart(),
+            self.search_query.into_into_dart().into_dart(),
+            self.signal.into_into_dart().into_dart(),
+            self.yank_text.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -781,12 +1287,36 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ExtraFile> for crate::api::Ex
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::typst_engine::FontFileData {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.path.into_into_dart().into_dart(),
+            self.bytes.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::typst_engine::FontFileData
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::typst_engine::FontFileData>
+    for crate::typst_engine::FontFileData
+{
+    fn into_into_dart(self) -> crate::typst_engine::FontFileData {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::highlighter::HighlightSpan {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.start.into_into_dart().into_dart(),
             self.end.into_into_dart().into_dart(),
             self.label.into_into_dart().into_dart(),
+            self.bold.into_into_dart().into_dart(),
+            self.italic.into_into_dart().into_dart(),
+            self.heading_level.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -810,6 +1340,7 @@ impl flutter_rust_bridge::IntoDart for crate::editor::RenderLine {
             self.spans.into_into_dart().into_dart(),
             self.is_composing.into_into_dart().into_dart(),
             self.start_u16.into_into_dart().into_dart(),
+            self.end_u16.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -825,7 +1356,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::TypstCompileResult {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.pages.into_into_dart().into_dart(),
-            self.errors.into_into_dart().into_dart(),
+            self.diagnostics.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -842,19 +1373,42 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::TypstCompileResult>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::api::TypstError {
+impl flutter_rust_bridge::IntoDart for crate::api::TypstCompletion {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.label.into_into_dart().into_dart(),
+            self.apply.into_into_dart().into_dart(),
+            self.detail.into_into_dart().into_dart(),
+            self.kind.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::TypstCompletion {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::TypstCompletion>
+    for crate::api::TypstCompletion
+{
+    fn into_into_dart(self) -> crate::api::TypstCompletion {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::TypstDiagnostic {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.message.into_into_dart().into_dart(),
             self.line.into_into_dart().into_dart(),
             self.column.into_into_dart().into_dart(),
+            self.severity.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::TypstError {}
-impl flutter_rust_bridge::IntoIntoDart<crate::api::TypstError> for crate::api::TypstError {
-    fn into_into_dart(self) -> crate::api::TypstError {
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::TypstDiagnostic {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::TypstDiagnostic>
+    for crate::api::TypstDiagnostic
+{
+    fn into_into_dart(self) -> crate::api::TypstDiagnostic {
         self
     }
 }
@@ -881,6 +1435,10 @@ impl flutter_rust_bridge::IntoDart for crate::vim_engine::VimAction {
             self.selection_start_column.into_into_dart().into_dart(),
             self.delete_range.into_into_dart().into_dart(),
             self.insert_text.into_into_dart().into_dart(),
+            self.command_text.into_into_dart().into_dart(),
+            self.replay_keys.into_into_dart().into_dart(),
+            self.signal.into_into_dart().into_dart(),
+            self.yank_text.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -900,6 +1458,11 @@ impl flutter_rust_bridge::IntoDart for crate::vim_engine::VimMode {
             Self::Normal => 0.into_dart(),
             Self::Insert => 1.into_dart(),
             Self::Visual => 2.into_dart(),
+            Self::VisualLine => 3.into_dart(),
+            Self::Search => 4.into_dart(),
+            Self::Command => 5.into_dart(),
+            Self::VisualBlock => 6.into_dart(),
+            Self::Replace => 7.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -949,10 +1512,17 @@ impl SseEncode for crate::editor::EditorView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Vec<crate::editor::RenderLine>>::sse_encode(self.lines, serializer);
+        <usize>::sse_encode(self.start_line, serializer);
         <usize>::sse_encode(self.cursor_line, serializer);
         <usize>::sse_encode(self.cursor_column_u16, serializer);
         <usize>::sse_encode(self.cursor_global_u16, serializer);
+        <Option<usize>>::sse_encode(self.selection_start_line, serializer);
+        <Option<usize>>::sse_encode(self.selection_start_column_u16, serializer);
         <crate::vim_engine::VimMode>::sse_encode(self.mode, serializer);
+        <Option<String>>::sse_encode(self.command_text, serializer);
+        <Option<String>>::sse_encode(self.search_query, serializer);
+        <Option<String>>::sse_encode(self.signal, serializer);
+        <Option<String>>::sse_encode(self.yank_text, serializer);
     }
 }
 
@@ -964,12 +1534,23 @@ impl SseEncode for crate::api::ExtraFile {
     }
 }
 
+impl SseEncode for crate::typst_engine::FontFileData {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <Vec<u8>>::sse_encode(self.bytes, serializer);
+    }
+}
+
 impl SseEncode for crate::highlighter::HighlightSpan {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <usize>::sse_encode(self.start, serializer);
         <usize>::sse_encode(self.end, serializer);
         <String>::sse_encode(self.label, serializer);
+        <bool>::sse_encode(self.bold, serializer);
+        <bool>::sse_encode(self.italic, serializer);
+        <Option<u8>>::sse_encode(self.heading_level, serializer);
     }
 }
 
@@ -980,12 +1561,32 @@ impl SseEncode for i32 {
     }
 }
 
+impl SseEncode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <String>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::ExtraFile> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::ExtraFile>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::typst_engine::FontFileData> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::typst_engine::FontFileData>::sse_encode(item, serializer);
         }
     }
 }
@@ -1020,12 +1621,22 @@ impl SseEncode for Vec<crate::editor::RenderLine> {
     }
 }
 
-impl SseEncode for Vec<crate::api::TypstError> {
+impl SseEncode for Vec<crate::api::TypstCompletion> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <crate::api::TypstError>::sse_encode(item, serializer);
+            <crate::api::TypstCompletion>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::TypstDiagnostic> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::TypstDiagnostic>::sse_encode(item, serializer);
         }
     }
 }
@@ -1046,6 +1657,16 @@ impl SseEncode for Option<String> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <String>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<u8> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <u8>::sse_encode(value, serializer);
         }
     }
 }
@@ -1080,6 +1701,16 @@ impl SseEncode for Option<crate::vim_engine::VimRange> {
     }
 }
 
+impl SseEncode for Option<Vec<String>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <Vec<String>>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<Vec<u8>> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1097,6 +1728,7 @@ impl SseEncode for crate::editor::RenderLine {
         <Vec<crate::highlighter::HighlightSpan>>::sse_encode(self.spans, serializer);
         <bool>::sse_encode(self.is_composing, serializer);
         <usize>::sse_encode(self.start_u16, serializer);
+        <usize>::sse_encode(self.end_u16, serializer);
     }
 }
 
@@ -1104,16 +1736,27 @@ impl SseEncode for crate::api::TypstCompileResult {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Vec<crate::api::TypstPage>>::sse_encode(self.pages, serializer);
-        <Vec<crate::api::TypstError>>::sse_encode(self.errors, serializer);
+        <Vec<crate::api::TypstDiagnostic>>::sse_encode(self.diagnostics, serializer);
     }
 }
 
-impl SseEncode for crate::api::TypstError {
+impl SseEncode for crate::api::TypstCompletion {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.label, serializer);
+        <Option<String>>::sse_encode(self.apply, serializer);
+        <Option<String>>::sse_encode(self.detail, serializer);
+        <String>::sse_encode(self.kind, serializer);
+    }
+}
+
+impl SseEncode for crate::api::TypstDiagnostic {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.message, serializer);
         <u32>::sse_encode(self.line, serializer);
         <u32>::sse_encode(self.column, serializer);
+        <u32>::sse_encode(self.severity, serializer);
     }
 }
 
@@ -1163,6 +1806,10 @@ impl SseEncode for crate::vim_engine::VimAction {
         <Option<usize>>::sse_encode(self.selection_start_column, serializer);
         <Option<crate::vim_engine::VimRange>>::sse_encode(self.delete_range, serializer);
         <Option<String>>::sse_encode(self.insert_text, serializer);
+        <Option<String>>::sse_encode(self.command_text, serializer);
+        <Option<Vec<String>>>::sse_encode(self.replay_keys, serializer);
+        <Option<String>>::sse_encode(self.signal, serializer);
+        <Option<String>>::sse_encode(self.yank_text, serializer);
     }
 }
 
@@ -1174,6 +1821,11 @@ impl SseEncode for crate::vim_engine::VimMode {
                 crate::vim_engine::VimMode::Normal => 0,
                 crate::vim_engine::VimMode::Insert => 1,
                 crate::vim_engine::VimMode::Visual => 2,
+                crate::vim_engine::VimMode::VisualLine => 3,
+                crate::vim_engine::VimMode::Search => 4,
+                crate::vim_engine::VimMode::Command => 5,
+                crate::vim_engine::VimMode::VisualBlock => 6,
+                crate::vim_engine::VimMode::Replace => 7,
                 _ => {
                     unimplemented!("");
                 }

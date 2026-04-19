@@ -1,10 +1,30 @@
-use crate::typst_engine::TypinkWorld;
 use typst::World;
+use crate::typst_engine::{TypinkWorld, FontFileData};
+use crate::editor::{HeadlessEditor, EditorView};
+use crate::vim_engine::VimAction;
+use once_cell::sync::Lazy;
+use std::sync::{Mutex, MutexGuard};
 
-pub struct TypstError {
+static EDITOR: Lazy<Mutex<HeadlessEditor>> = Lazy::new(|| Mutex::new(HeadlessEditor::new()));
+
+fn lock_editor() -> MutexGuard<'static, HeadlessEditor> {
+    match EDITOR.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            let guard = poisoned.into_inner();
+            #[cfg(target_os = "android")]
+            log::warn!("EDITOR lock poisoned! Attempting to recover...");
+            eprintln!("RUST_WARNING: EDITOR lock poisoned! Attempting to recover...");
+            guard
+        }
+    }
+}
+
+pub struct TypstDiagnostic {
     pub message: String,
     pub line: u32,
     pub column: u32,
+    pub severity: u32, // 1: Error, 2: Warning, 3: Hint, 4: Info
 }
 
 pub struct TypstPage {
@@ -13,7 +33,14 @@ pub struct TypstPage {
 
 pub struct TypstCompileResult {
     pub pages: Vec<TypstPage>,
-    pub errors: Vec<TypstError>,
+    pub diagnostics: Vec<TypstDiagnostic>,
+}
+
+pub struct TypstCompletion {
+    pub label: String,
+    pub apply: Option<String>,
+    pub detail: Option<String>,
+    pub kind: String,
 }
 
 pub fn hello_from_rust() -> String {
@@ -31,10 +58,15 @@ pub fn compile_typst(content: String, extra_files: Vec<ExtraFile>) -> TypstCompi
         extras.insert(file.name, file.data);
     }
     
-    let world = TypinkWorld::new(content, extras);
-    let output = typst::compile::<typst::layout::PagedDocument>(&world).output;
+    let fonts = {
+        let editor = lock_editor();
+        editor.preloaded_fonts.clone()
+    };
     
-    match output {
+    let world = TypinkWorld::new(content, extras, fonts);
+    let output = typst::compile::<typst::layout::PagedDocument>(&world);
+    
+    match output.output {
         Ok(paged_doc) => {
             let mut pages = Vec::new();
             for page in &paged_doc.pages {
@@ -48,28 +80,36 @@ pub fn compile_typst(content: String, extra_files: Vec<ExtraFile>) -> TypstCompi
             }
             TypstCompileResult {
                 pages,
-                errors: Vec::new(),
+                diagnostics: Vec::new(),
             }
         }
         Err(diags) => {
-            let mut errors = Vec::new();
+            let mut diagnostics = Vec::new();
             let source = world.source(world.main()).unwrap();
             
             for diag in diags {
                 let range = source.range(diag.span).unwrap_or(0..0);
-                let line = source.byte_to_line(range.start).unwrap_or(0);
-                let column = source.byte_to_column(range.start).unwrap_or(0);
+                let text = source.text();
+                let line = text[..range.start].chars().filter(|&c| c == '\n').count();
+                let last_line_start = text[..range.start].rfind('\n').map(|i| i + 1).unwrap_or(0);
+                let column = text[last_line_start..range.start].chars().count();
                 
-                errors.push(TypstError {
+                let severity = match diag.severity {
+                    typst::diag::Severity::Error => 1,
+                    typst::diag::Severity::Warning => 2,
+                };
+
+                diagnostics.push(TypstDiagnostic {
                     message: diag.message.to_string(),
                     line: line as u32,
                     column: column as u32,
+                    severity,
                 });
             }
             
             TypstCompileResult {
                 pages: Vec::new(),
-                errors,
+                diagnostics,
             }
         }
     }
@@ -81,10 +121,15 @@ pub fn compile_pdf(content: String, extra_files: Vec<ExtraFile>) -> Option<Vec<u
         extras.insert(file.name, file.data);
     }
     
-    let world = TypinkWorld::new(content, extras);
-    let output = typst::compile::<typst::layout::PagedDocument>(&world).output;
+    let fonts = {
+        let editor = lock_editor();
+        editor.preloaded_fonts.clone()
+    };
     
-    match output {
+    let world = TypinkWorld::new(content, extras, fonts);
+    let output = typst::compile::<typst::layout::PagedDocument>(&world);
+    
+    match output.output {
         Ok(paged_doc) => {
             let pdf = typst_pdf::pdf(&paged_doc, &typst_pdf::PdfOptions::default()).ok()?;
             Some(pdf)
@@ -92,51 +137,168 @@ pub fn compile_pdf(content: String, extra_files: Vec<ExtraFile>) -> Option<Vec<u
         Err(_) => None,
     }
 }
-use crate::editor::{HeadlessEditor, EditorView};
-use crate::vim_engine::{VimAction};
-use crate::highlighter::{HighlightSpan};
-use once_cell::sync::Lazy;
-use std::sync::Mutex;
-
-static EDITOR: Lazy<Mutex<HeadlessEditor>> = Lazy::new(|| Mutex::new(HeadlessEditor::new()));
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn get_editor_view(start_line: usize, end_line: usize) -> EditorView {
-    let editor = EDITOR.lock().unwrap();
+    let mut editor = lock_editor();
     editor.get_view(start_line, end_line)
+}
+
+pub async fn get_completions(content: String, offset_u16: usize) -> Vec<TypstCompletion> {
+    let res = std::thread::Builder::new()
+        .name("typst-autocomplete".into())
+        .stack_size(8 * 1024 * 1024)
+        .spawn(move || {
+            std::panic::catch_unwind(move || {
+                let mut editor = lock_editor();
+                editor.get_completions(content, offset_u16)
+            })
+        })
+        .unwrap()
+        .join();
+
+    match res {
+        Ok(Ok(completions)) => completions,
+        _ => Vec::new(),
+    }
 }
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn handle_editor_key(key: String) -> Option<VimAction> {
-    let mut editor = EDITOR.lock().unwrap();
+    let mut editor = lock_editor();
     editor.handle_key(&key)
 }
 
+#[flutter_rust_bridge::frb(sync)]
+pub fn handle_editor_set_vim_register(text: String) {
+    let mut editor = lock_editor();
+    editor.set_vim_register(text);
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn handle_editor_init_fonts(fonts: Vec<FontFileData>) {
+    let mut editor = lock_editor();
+    editor.preloaded_fonts = fonts;
+    // Clear the world to force a rebuild with new fonts
+    editor.world = None;
+}
+
+#[flutter_rust_bridge::frb(init)]
+pub fn init_app() {
+    init_rust();
+}
+
+#[no_mangle]
+pub extern "C" fn frb_init_app() {
+    init_rust();
+}
+
+fn init_rust() {
+    use std::sync::Once;
+    static START: Once = Once::new();
+    
+    START.call_once(|| {
+        #[cfg(target_os = "android")]
+        {
+            android_logger::init_once(
+                android_logger::Config::default()
+                    .with_max_level(log::LevelFilter::Debug)
+                    .with_tag("RustCore"),
+            );
+            log::info!("Rust Core initialized");
+        }
+
+        std::panic::set_hook(Box::new(|info| {
+            let msg = if let Some(s) = info.payload().downcast_ref::<&str>() {
+                *s
+            } else if let Some(s) = info.payload().downcast_ref::<String>() {
+                &s[..]
+            } else {
+                "unknown panic"
+            };
+            let location = info.location().map(|l| l.to_string()).unwrap_or_default();
+            
+            #[cfg(target_os = "android")]
+            log::error!("RUST_PANIC: {} at {}", msg, location);
+            
+            eprintln!("RUST_PANIC: {} at {}", msg, location);
+        }));
+    });
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn handle_editor_init_jni_safety() {
+    // Deprecated in favor of init_app, but keeping for compatibility if called elsewhere
+    init_app();
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn handle_editor_get_total_lines() -> usize {
+    let editor = lock_editor();
+    editor.buffer.len_lines()
+}
+
 pub fn handle_editor_trigger_highlight() {
-    let mut editor = EDITOR.lock().unwrap();
+    let mut editor = lock_editor();
     editor.trigger_highlight();
+}
+
+pub fn handle_editor_save(path: String) -> Result<(), String> {
+    let editor = lock_editor();
+    editor.save(&path).map_err(|e| e.to_string())
+}
+
+pub fn handle_editor_load(path: String) -> Result<String, String> {
+    let mut editor = lock_editor();
+    editor.load(&path).map_err(|e| e.to_string())?;
+    Ok(editor.buffer.to_string())
+}
+
+pub fn handle_editor_export_pdf(path: String) -> Result<(), String> {
+    let res = std::thread::Builder::new()
+        .name("typst-export".into())
+        .stack_size(8 * 1024 * 1024)
+        .spawn(move || {
+            std::panic::catch_unwind(move || {
+                let mut editor = lock_editor();
+                editor.export_pdf(&path)
+            })
+        })
+        .unwrap()
+        .join();
+
+    match res {
+        Ok(Ok(val)) => val,
+        _ => Err("PDF export failed or panicked".into()),
+    }
 }
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn handle_editor_replace_range(start_u16: usize, end_u16: usize, text: String, cursor_u16: Option<usize>) {
-    let mut editor = EDITOR.lock().unwrap();
+    let mut editor = lock_editor();
     editor.replace_range(start_u16, end_u16, &text, cursor_u16);
 }
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn handle_editor_update_selection(cursor_u16: usize) {
-    let mut editor = EDITOR.lock().unwrap();
+    let mut editor = lock_editor();
     editor.set_cursor_u16(cursor_u16);
 }
 
 #[flutter_rust_bridge::frb(sync)]
+pub fn handle_editor_set_cursor(line: usize, col: usize) {
+    let mut editor = lock_editor();
+    editor.set_cursor(line, col);
+}
+
+#[flutter_rust_bridge::frb(sync)]
 pub fn get_editor_content() -> String {
-    let editor = EDITOR.lock().unwrap();
+    let editor = lock_editor();
     editor.buffer.to_string()
 }
 
 #[flutter_rust_bridge::frb(sync)]
 pub fn set_editor_content(content: String) {
-    let mut editor = EDITOR.lock().unwrap();
+    let mut editor = lock_editor();
     editor.set_content(&content);
 }
