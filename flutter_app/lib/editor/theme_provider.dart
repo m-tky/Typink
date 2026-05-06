@@ -147,6 +147,34 @@ class SyntaxTheme {
     variable: const Color(0xFFE06C75), // Red
   );
 
+  factory SyntaxTheme.nightfox() => SyntaxTheme(
+    heading: const Color(0xFF719CD6),    // Blue bright
+    math: const Color(0xFF719CD6),       // Blue base
+    mathOperator: const Color(0xFFAEAFB0), // FG2
+    mathPunctuation: const Color(0xFFAEAFB0),
+    mathKeyword: const Color(0xFF9D79D6), // Magenta base
+    mathFunction: const Color(0xFF719CD6),
+    mathVariable: const Color(0xFFDFDFE0), // White base
+    delimiterL1: const Color(0xFFDBC074), // Yellow base
+    delimiterL2: const Color(0xFF9D79D6), // Magenta base
+    delimiterL3: const Color(0xFF719CD6), // Blue base
+    delimiterL4: const Color(0xFFF4A261), // Orange base
+    delimiterL5: const Color(0xFF81B29A), // Green base
+    raw: const Color(0xFFF4A261),         // Orange base
+    link: const Color(0xFF63CDCF),        // Cyan base
+    label: const Color(0xFF63CDCF),
+    ref: const Color(0xFF63CDCF),
+    marker: const Color(0xFFC94F6D),      // Red base
+    operator: const Color(0xFFAEAFB0),   // FG2
+    punctuation: const Color(0xFFAEAFB0),
+    error: const Color(0xFFC94F6D),
+    function: const Color(0xFF719CD6),
+    keyword: const Color(0xFF9D79D6),
+    string: const Color(0xFF81B29A),
+    comment: const Color(0xFF738091),
+    variable: const Color(0xFFDFDFE0),
+  );
+
   SyntaxTheme copyWith({
     Color? heading,
     Color? math,
@@ -278,6 +306,24 @@ class AppTheme {
     previewBackground: const Color(0xFF21252B),
     syntaxTheme: SyntaxTheme.oneDark(),
   );
+
+  static AppTheme get nightfox => AppTheme(
+    themeData: ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF131A24), // BG0
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF719CD6), // Blue base
+        secondary: Color(0xFF9D79D6), // Magenta base
+        surface: Color(0xFF192330), // BG1
+        background: Color(0xFF131A24),
+      ),
+    ),
+    editorBackground: const Color(0xFF192330), // BG1
+    editorTextColor: const Color(0xFFCDCECF), // FG1
+    previewBackground: const Color(0xFF131A24), // BG0
+    syntaxTheme: SyntaxTheme.nightfox(),
+  );
 }
 
 final themeProvider = Provider<AppThemeMode>((ref) {
@@ -295,5 +341,7 @@ final activeThemeDetailedProvider = Provider<AppTheme>((ref) {
       return AppTheme.catppuccin;
     case AppThemeMode.oneDark:
       return AppTheme.oneDark;
+    case AppThemeMode.nightfox:
+      return AppTheme.nightfox;
   }
 });

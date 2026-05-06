@@ -411,15 +411,18 @@ impl HeadlessEditor {
     pub fn get_completions(&mut self, content: String, offset_u16: usize) -> Vec<crate::api::TypstCompletion> {
         // Ensure world is initialized and updated
         if self.world.is_none() {
-            self.world = Some(TypinkWorld::new(content, HashMap::new(), self.preloaded_fonts.clone()));
+            self.world = Some(TypinkWorld::new(content.clone(), HashMap::new(), self.preloaded_fonts.clone()));
         } else {
-            self.world.as_ref().unwrap().set_main_content(content);
+            self.world.as_ref().unwrap().set_main_content(content.clone());
         }
 
         let world = self.world.as_ref().unwrap();
         use typst::World;
         let source = world.source(world.main()).unwrap();
-        let byte_offset = self.utf16_idx_to_byte_idx(offset_u16);
+        
+        // IMPORTANT: Calculate byte offset from the content string themselves, 
+        // NOT from self.buffer, because they might be out of sync during IME/fast typing.
+        let byte_offset = utf16_to_byte_offset(&content, offset_u16);
         
         let completions = typst_ide::autocomplete(world, None, &source, byte_offset, false);
         
@@ -434,6 +437,21 @@ impl HeadlessEditor {
             }).collect()
         }).unwrap_or_default()
     }
+}
+
+/// Safely converts a UTF-16 index to a UTF-8 byte offset within a string.
+/// This ensures we always land on a character boundary.
+fn utf16_to_byte_offset(text: &str, target_u16: usize) -> usize {
+    let mut current_u16 = 0;
+    let mut current_byte = 0;
+    for c in text.chars() {
+        if current_u16 >= target_u16 {
+            break;
+        }
+        current_u16 += c.len_utf16();
+        current_byte += c.len_utf8();
+    }
+    current_byte
 }
 
 #[cfg(test)]
@@ -536,5 +554,36 @@ mod tests {
         editor.handle_key("l");
         // In real vim-engine we'd check selection, for now just ensure mode
         assert_eq!(editor.vim.mode, VimMode::Visual);
+    }
+
+    #[test]
+    fn test_utf16_to_byte_offset_japanese() {
+        let text = "カオス乱流"; // 'カオス' (3 chars, 3*3=9 bytes, 3*1=3 u16)
+                            // '乱流' (2 chars, 2*3=6 bytes, 2*1=2 u16)
+        
+        // Offset 3 (after カオス) should be byte 9
+        assert_eq!(utf16_to_byte_offset(text, 3), 9);
+        
+        // Offset 4 (after 乱) should be byte 12 (9 + 3)
+        assert_eq!(utf16_to_byte_offset(text, 4), 12);
+        
+        // Offset 5 (after 流) should be byte 15 (12 + 3)
+        assert_eq!(utf16_to_byte_offset(text, 5), 15);
+    }
+
+    #[test]
+    fn test_get_completions_sync_safety() {
+        let mut editor = HeadlessEditor::new();
+        editor.set_content("initial content"); // buffer is now "initial content"
+        
+        // Now call get_completions with DIFFERENT content but Same offset
+        // If it use's editor's buffer for offset, it might panic or return wrong results
+        let content = "カオス乱流".to_string();
+        let offset_u16 = 4; // After '乱'
+        
+        // Should NOT panic even if editor.buffer is totally different
+        let completions = editor.get_completions(content, offset_u16);
+        // We just care that it didn't panic.
+        drop(completions);
     }
 }

@@ -308,7 +308,11 @@ class HeadlessEditorViewState extends EditorStateBase
     if (widget.focusNode.hasFocus) {
       _updateConnectionState();
     } else {
-      _closeInputConnectionIfNeeded();
+      // Don't close connection if we are in Insert mode, 
+      // as it might clear OS-level IME state like Japanese input mode or composition.
+      if (_view?.mode != VimMode.insert) {
+        _closeInputConnectionIfNeeded();
+      }
     }
   }
 
@@ -406,6 +410,20 @@ class HeadlessEditorViewState extends EditorStateBase
         'assets/fonts/IBMPlexSans-Regular.otf',
         'assets/fonts/IBMPlexSansJP-Regular.otf',
         'assets/fonts/NewComputerModernMath.otf',
+        'assets/fonts/HaranoAjiGothic-Bold.otf',
+        'assets/fonts/HaranoAjiGothic-ExtraLight.otf',
+        'assets/fonts/HaranoAjiGothic-Heavy.otf',
+        'assets/fonts/HaranoAjiGothic-Light.otf',
+        'assets/fonts/HaranoAjiGothic-Medium.otf',
+        'assets/fonts/HaranoAjiGothic-Normal.otf',
+        'assets/fonts/HaranoAjiGothic-Regular.otf',
+        'assets/fonts/HaranoAjiMincho-Bold.otf',
+        'assets/fonts/HaranoAjiMincho-ExtraLight.otf',
+        'assets/fonts/HaranoAjiMincho-Heavy.otf',
+        'assets/fonts/HaranoAjiMincho-Light.otf',
+        'assets/fonts/HaranoAjiMincho-Medium.otf',
+        'assets/fonts/HaranoAjiMincho-Regular.otf',
+        'assets/fonts/HaranoAjiMincho-SemiBold.otf',
       ];
       
       for (final asset in fontAssets) {
@@ -812,6 +830,8 @@ class HeadlessEditorViewState extends EditorStateBase
 
     final painter = HeadlessEditorPainter(
       view: _view!,
+      fontSize: editorFontSize,
+      lineHeight: editorLineHeight,
       textStyle: widget.textStyle,
       cursorColor: widget.cursorColor,
       settings: settings,

@@ -147,6 +147,8 @@ class SettingsPanel extends ConsumerWidget {
               'IBM Plex Sans',
               'Moralerspace Argon',
               'Inter',
+              'Harano Aji Gothic',
+              'Harano Aji Mincho',
               settings.activeFont,
               ...settings.customFontPaths.map((path) => p.basenameWithoutExtension(path)),
             ].toSet().map((font) {
@@ -176,6 +178,24 @@ class SettingsPanel extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 16),
+          ListTile(
+            title: const Text('Editor Font Size', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: settings.fontSize.clamp(8.0, 32.0),
+                    min: 8.0,
+                    max: 32.0,
+                    divisions: 24,
+                    label: settings.fontSize.toStringAsFixed(1),
+                    onChanged: (val) => notifier.setFontSize(val),
+                  ),
+                ),
+                Text(settings.fontSize.toStringAsFixed(1)),
+              ],
+            ),
+          ),
           const Text('Custom Font Paths (Notebook):', style: TextStyle(fontWeight: FontWeight.bold)),
           ...settings.customFontPaths.map((path) => ListTile(
             dense: true,
@@ -191,7 +211,7 @@ class SettingsPanel extends ConsumerWidget {
             icon: const Icon(Icons.add),
             label: const Text('Add External Font File'),
           ),
-          const Spacer(),
+          const SizedBox(height: 32),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Center(child: Text('Typink v1.0.0', style: TextStyle(color: Colors.grey[600], fontSize: 12))),

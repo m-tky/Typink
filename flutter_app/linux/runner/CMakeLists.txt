@@ -20,7 +20,12 @@ apply_standard_settings(${BINARY_NAME})
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
 # Add dependency libraries. Add any application-specific dependencies here.
+pkg_check_modules(FONTCONFIG REQUIRED IMPORTED_TARGET fontconfig)
+pkg_check_modules(MOUNT REQUIRED IMPORTED_TARGET mount)
+
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
+target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::FONTCONFIG)
+target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::MOUNT)
 
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")

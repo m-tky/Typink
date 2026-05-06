@@ -27,30 +27,52 @@ Notebook/
 
 ## Build Instructions
 
-### Prerequisites
-- **Nix** (Recommended for Linux/NixOS users)
-- **Flutter SDK**
-- **Rust Toolchain**
-- **Podman** (For Android builds)
+Typink uses a hybrid architecture with a Rust core. **Nix** is required to manage the toolchain (Flutter SDK, Rust, Android NDK).
 
-### 1. Code Generation
-To regenerate the Rust-Dart bridge, use the following official command (requires `nix-shell` and local `flutter_rust_bridge_codegen`):
+### 1. Environment Setup
 
+Always enter the Nix shell from the project root before building or running:
 ```bash
-nix-shell -p cargo cargo-expand flutter rustfmt libclang.lib --run "export LLVM_ROOT=\$(nix-build '<nixpkgs>' -A libclang.lib --no-out-link); export LIBCLANG_PATH=\$LLVM_ROOT/lib; ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input rust/src/api.rs --dart-output flutter_app/lib/bridge_generated.dart --dart-decl-output flutter_app/lib/bridge_definitions.dart --rust-output rust/src/bridge_generated.rs --rust-crate-dir rust --dart-root flutter_app --llvm-path \$LLVM_ROOT"
+nix-shell shell.nix
 ```
 
-### 2. Run Locally (Linux)
+### 2. Linux Development
+
+#### Build Rust Core
 ```bash
-cd flutter_app
-nix-shell -p flutter --run "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$(pwd)/../rust/target/debug; flutter run -d linux"
+nix-shell shell.nix --run "cd rust && cargo build"
 ```
 
-### 3. Build for Android
-Use the provided build container scripts:
+#### Run Application
 ```bash
-./build-container/scripts/build_android.sh
+# Note: LD_LIBRARY_PATH is required for the Linux app to find the Rust library
+nix-shell shell.nix --run "cd flutter_app && export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$(pwd)/../rust/target/debug; flutter run -d linux"
 ```
+
+### 3. Android Development
+
+#### Build Rust Core (Cross-Compile)
+This script handles the cross-compilation for `arm64-v8a` and bundles the `.so` files into the Flutter project.
+```bash
+nix-shell shell.nix --run "cd rust && ./build_android.sh"
+```
+
+#### Run Application
+```bash
+nix-shell shell.nix --run "cd flutter_app && flutter run"
+```
+
+#### Build APK
+```bash
+nix-shell shell.nix --run "cd flutter_app && flutter build apk"
+```
+The optimized APK will be located at:
+`flutter_app/build/app/outputs/flutter-apk/app-release.apk`
+
+---
+
+> [!TIP]
+> If you encounter "file INSTALL cannot find" or other directory errors, run `flutter clean` in the `flutter_app` directory inside the nix-shell.
 
 ## User Guide
 

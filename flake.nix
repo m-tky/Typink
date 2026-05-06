@@ -64,44 +64,51 @@
           ndk-28-2-13676358
         ]);
 
-        devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            git
-            pkg-config
-            cmake
-            ninja
-            gcc
+        devShell = pkgs-stable.mkShell {
+          buildInputs = [
+            pkgs-stable.git
+            pkgs-stable.pkg-config
+            pkgs-stable.cmake
+            pkgs-stable.ninja
+            pkgs-stable.gcc
             # Use stable flutter (3.24.5) to avoid engine.realm issues in unstable
             pkgs-stable.flutter
-            steam-run
-            jdk17
-            unzip
-            which
-            zenity
+            pkgs-stable.steam-run
+            pkgs-stable.jdk17
+            pkgs-stable.unzip
+            pkgs-stable.which
+            pkgs-stable.zenity
             rust
-            cargo-ndk
-            cacert
-            glib
-            gtk3
-            pango
-            cairo
-            gdk-pixbuf
-            atk
-            dbus
-            libxcrypt-legacy
-            libGL
-            libuuid
-            zlib
+            pkgs-stable.cargo-ndk
+            pkgs-stable.cacert
+            pkgs-stable.glib
+            pkgs-stable.gtk3
+            pkgs-stable.pango
+            pkgs-stable.cairo
+            pkgs-stable.gdk-pixbuf
+            pkgs-stable.atk
+            pkgs-stable.dbus
+            pkgs-stable.libxcrypt-legacy
+            pkgs-stable.libGL
+            pkgs-stable.libuuid
+            pkgs-stable.zlib
+            pkgs-stable.fontconfig
+            pkgs-stable.freetype
+            pkgs-stable.libxkbcommon
+            pkgs-stable.util-linux # for libmount
+            pkgs-stable.libglvnd
           ];
 
           shellHook = ''
             export ANDROID_HOME=${sdk}/share/android-sdk
             export ANDROID_SDK_ROOT=$ANDROID_HOME
             export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973
-            export JAVA_HOME=${pkgs.jdk17}
-            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+            export JAVA_HOME=${pkgs-stable.jdk17}
+            export SSL_CERT_FILE=${pkgs-stable.cacert}/etc/ssl/certs/ca-bundle.crt
             export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$PATH
-            export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath (with pkgs; [ stdenv.cc.cc.lib libGL libuuid zlib glib gtk3 pango cairo gdk-pixbuf atk dbus libxcrypt-legacy ])}:''${LD_LIBRARY_PATH:-}
+            export LD_LIBRARY_PATH=${pkgs-stable.lib.makeLibraryPath (with pkgs-stable; [ stdenv.cc.cc.lib libGL libuuid zlib glib gtk3 pango cairo gdk-pixbuf atk dbus libxcrypt-legacy fontconfig util-linux libglvnd mesa ])}:''${LD_LIBRARY_PATH:-}
+            export LIBGL_DRIVERS_PATH=${pkgs-stable.mesa.drivers}/lib/dri
+            export __GLX_VENDOR_LIBRARY_NAME=mesa
             
             echo "=== Typink Development Environment (Flake - Stable Flutter) ==="
             echo "Android SDK: $ANDROID_HOME"
@@ -128,15 +135,20 @@
           
           nativeBuildInputs = [ pkgs.pkg-config ];
           buildInputs = [
-            pkgs.gtk3
-            pkgs.pango
-            pkgs.cairo
-            pkgs.gdk-pixbuf
-            pkgs.atk
-            pkgs.dbus
-            pkgs.libGL
-            pkgs.libuuid
-            pkgs.zlib
+            pkgs-stable.gtk3
+            pkgs-stable.pango
+            pkgs-stable.cairo
+            pkgs-stable.gdk-pixbuf
+            pkgs-stable.atk
+            pkgs-stable.dbus
+            pkgs-stable.libGL
+            pkgs-stable.libuuid
+            pkgs-stable.zlib
+            pkgs-stable.fontconfig
+            pkgs-stable.freetype
+            pkgs-stable.libxkbcommon
+            pkgs-stable.util-linux
+            pkgs-stable.libglvnd
           ];
           
           postInstall = ''

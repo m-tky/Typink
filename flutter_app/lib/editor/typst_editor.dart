@@ -638,7 +638,7 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
         initialContent: ref.read(rawContentProvider),
         currentPath: ref.watch(currentTypFileProvider)?.path,
         textStyle: TextStyle(
-          fontSize: 14.0,
+          fontSize: settings.fontSize,
           fontFamily: settings.editorFont,
           color: theme.editorTextColor,
           height: 1.4,
@@ -650,9 +650,8 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
 
           // 状態の世代（Version）をインクリメント
           ref.read(contentVersionProvider.notifier).update((v) => v + 1);
-          final targetVersion = ref.read(contentVersionProvider);
-
           ref.read(rawContentProvider.notifier).state = content;
+          final targetVersion = ref.read(contentVersionProvider);
 
           _compileDebounceTimer?.cancel();
           _compileDebounceTimer = Timer(const Duration(milliseconds: 500), () {

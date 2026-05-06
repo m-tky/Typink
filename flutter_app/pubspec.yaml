@@ -83,6 +83,40 @@ flutter:
       fonts:
         - asset: assets/fonts/NewComputerModernMath.otf
 
+    - family: Harano Aji Gothic
+      fonts:
+        - asset: assets/fonts/HaranoAjiGothic-Bold.otf
+          weight: 700
+        - asset: assets/fonts/HaranoAjiGothic-ExtraLight.otf
+          weight: 100
+        - asset: assets/fonts/HaranoAjiGothic-Heavy.otf
+          weight: 900
+        - asset: assets/fonts/HaranoAjiGothic-Light.otf
+          weight: 200
+        - asset: assets/fonts/HaranoAjiGothic-Medium.otf
+          weight: 500
+        - asset: assets/fonts/HaranoAjiGothic-Normal.otf
+          weight: 300
+        - asset: assets/fonts/HaranoAjiGothic-Regular.otf
+          weight: 400
+
+    - family: Harano Aji Mincho
+      fonts:
+        - asset: assets/fonts/HaranoAjiMincho-Bold.otf
+          weight: 700
+        - asset: assets/fonts/HaranoAjiMincho-ExtraLight.otf
+          weight: 100
+        - asset: assets/fonts/HaranoAjiMincho-Heavy.otf
+          weight: 900
+        - asset: assets/fonts/HaranoAjiMincho-Light.otf
+          weight: 200
+        - asset: assets/fonts/HaranoAjiMincho-Medium.otf
+          weight: 500
+        - asset: assets/fonts/HaranoAjiMincho-Regular.otf
+          weight: 400
+        - asset: assets/fonts/HaranoAjiMincho-SemiBold.otf
+          weight: 600
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

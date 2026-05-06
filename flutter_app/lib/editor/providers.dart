@@ -500,6 +500,7 @@ enum AppThemeMode {
   dark,
   catppuccin,
   oneDark,
+  nightfox,
 }
 
 class AppSettings {
@@ -512,6 +513,7 @@ class AppSettings {
   final bool relativeLineNumbers;
   final bool showWhitespace;
   final bool vimEnabled;
+  final double fontSize;
   final AppThemeMode theme;
 
   const AppSettings({
@@ -524,6 +526,7 @@ class AppSettings {
     this.relativeLineNumbers = false,
     this.showWhitespace = false,
     this.vimEnabled = true,
+    this.fontSize = 14.0,
     this.theme = AppThemeMode.dark,
   });
 
@@ -537,6 +540,7 @@ class AppSettings {
     'relativeLineNumbers': relativeLineNumbers,
     'showWhitespace': showWhitespace,
     'vimEnabled': vimEnabled,
+    'fontSize': fontSize,
     'theme': theme.index,
   };
 
@@ -554,6 +558,7 @@ class AppSettings {
       relativeLineNumbers: json['relativeLineNumbers'] ?? false,
       showWhitespace: json['showWhitespace'] ?? false,
       vimEnabled: json['vimEnabled'] ?? true,
+      fontSize: (json['fontSize'] ?? 14.0).toDouble(),
       theme: AppThemeMode.values[(json['theme'] ?? AppThemeMode.dark.index).clamp(0, AppThemeMode.values.length - 1)],
     );
   }
@@ -568,6 +573,7 @@ class AppSettings {
     bool? relativeLineNumbers,
     bool? showWhitespace,
     bool? vimEnabled,
+    double? fontSize,
     AppThemeMode? theme,
   }) {
     return AppSettings(
@@ -580,6 +586,7 @@ class AppSettings {
       relativeLineNumbers: relativeLineNumbers ?? this.relativeLineNumbers,
       showWhitespace: showWhitespace ?? this.showWhitespace,
       vimEnabled: vimEnabled ?? this.vimEnabled,
+      fontSize: fontSize ?? this.fontSize,
       theme: theme ?? this.theme,
     );
   }
@@ -608,6 +615,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void toggleRelativeLineNumbers() => state = state.copyWith(relativeLineNumbers: !state.relativeLineNumbers);
   void toggleShowWhitespace() => state = state.copyWith(showWhitespace: !state.showWhitespace);
   void toggleVimEnabled() => state = state.copyWith(vimEnabled: !state.vimEnabled);
+  void setFontSize(double size) => state = state.copyWith(fontSize: size);
   void setTheme(AppThemeMode theme) => state = state.copyWith(theme: theme);
 }
 
