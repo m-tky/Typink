@@ -6,11 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:typink/editor/headless_editor.dart';
 import 'package:typink/frb_generated.dart/api.dart' as bridge;
 import 'package:typink/frb_generated.dart/frb_generated.dart';
+import 'package:typink/frb_generated.dart/vim_engine.dart' as v;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Editor correctly handles typing and clicking', (WidgetTester tester) async {
+  testWidgets('Editor correctly handles typing and clicking',
+      (WidgetTester tester) async {
     await RustLib.init();
 
     await tester.pumpWidget(
@@ -23,7 +25,8 @@ void main() {
                 height: 400,
                 child: HeadlessEditorView(
                   focusNode: FocusNode(),
-                  textStyle: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
+                  textStyle:
+                      const TextStyle(fontSize: 14, fontFamily: 'monospace'),
                   cursorColor: Colors.blue,
                   initialContent: "Hello\nWorld\n",
                 ),
@@ -48,7 +51,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify initial cursor position (starts at 0)
-    var view = bridge.getEditorView(startLine: BigInt.from(0), endLine: BigInt.from(10));
+    var view = bridge.getEditorView(
+        startLine: BigInt.from(0), endLine: BigInt.from(10));
     expect(view.cursorGlobalU16.toInt(), equals(0));
 
     // Now test pointer click to move cursor
@@ -58,14 +62,17 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify cursor has moved down
-    view = bridge.getEditorView(startLine: BigInt.from(0), endLine: BigInt.from(10));
-    
+    view = bridge.getEditorView(
+        startLine: BigInt.from(0), endLine: BigInt.from(10));
+
     // It should have moved to the second line or somewhere > 0
     expect(view.cursorGlobalU16.toInt(), greaterThan(5));
-    expect(view.mode, equals(bridge.VimMode.normal)); // Should still be in Normal mode
+    expect(
+        view.mode, equals(v.VimMode.normal)); // Should still be in Normal mode
   });
 
-  testWidgets('Editor handles Vim commands (dd, p)', (WidgetTester tester) async {
+  testWidgets('Editor handles Vim commands (dd, p)',
+      (WidgetTester tester) async {
     await RustLib.init();
 
     await tester.pumpWidget(
@@ -78,7 +85,8 @@ void main() {
                 height: 400,
                 child: HeadlessEditorView(
                   focusNode: FocusNode(),
-                  textStyle: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
+                  textStyle:
+                      const TextStyle(fontSize: 14, fontFamily: 'monospace'),
                   cursorColor: Colors.blue,
                   initialContent: "Line 1\nLine 2\nLine 3",
                 ),

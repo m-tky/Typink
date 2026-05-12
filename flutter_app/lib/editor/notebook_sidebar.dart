@@ -39,25 +39,30 @@ class _NotebookSidebarState extends ConsumerState<NotebookSidebar> {
   @override
   Widget build(BuildContext context) {
     final currentDir = ref.watch(notebookPathProvider);
-    final currentNote = ref.watch(noteNameProvider);
+    final currentNote = ref.watch(documentTitleProvider);
 
     return Drawer(
       child: Column(
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer),
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Typink Notebooks', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Typink Notebooks',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text('Root: ${currentDir?.path ?? "Not Set"}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text('Root: ${currentDir?.path ?? "Not Set"}',
+                    style: const TextStyle(fontSize: 10, color: Colors.grey)),
                 const Spacer(),
                 ElevatedButton.icon(
                   onPressed: _refreshFiles,
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Refresh'),
-                  style: ElevatedButton.styleFrom(visualDensity: VisualDensity.compact),
+                  style: ElevatedButton.styleFrom(
+                      visualDensity: VisualDensity.compact),
                 ),
               ],
             ),
@@ -76,11 +81,15 @@ class _NotebookSidebarState extends ConsumerState<NotebookSidebar> {
                   final isCurrent = name == currentNote;
 
                   return ListTile(
-                    leading: Icon(Icons.description, color: isCurrent ? Colors.blue : null),
-                    title: Text(name, style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : null)),
+                    leading: Icon(Icons.description,
+                        color: isCurrent ? Colors.blue : null),
+                    title: Text(name,
+                        style: TextStyle(
+                            fontWeight: isCurrent ? FontWeight.bold : null)),
                     selected: isCurrent,
                     onTap: () {
-                      ref.read(persistenceProvider).loadNotebook(currentDir!); // TODO: Support subdirs if needed
+                      ref.read(persistenceProvider).loadNotebook(
+                          currentDir!); // TODO: Support subdirs if needed
                       // Actually just update the content if it's the same dir
                       _openFile(file);
                       Navigator.pop(context);
@@ -99,7 +108,7 @@ class _NotebookSidebarState extends ConsumerState<NotebookSidebar> {
     ref.read(rawContentProvider.notifier).state = content;
     ref.read(debouncedContentProvider.notifier).state = content;
     // Note name is derived from filename in our current noteNameProvider
-    // But wait, my noteNameProvider uses p.basename(dir.path). 
+    // But wait, my noteNameProvider uses p.basename(dir.path).
     // I should probably update it to use the filename.
   }
 }

@@ -26,10 +26,10 @@ class VimNotifier {
     if (key == LogicalKeyboardKey.escape) return 'Escape';
     if (key == LogicalKeyboardKey.backspace) return 'Backspace';
     if (key == LogicalKeyboardKey.enter) return 'Enter';
-    
+
     final label = key.keyLabel;
     if (label.length == 1) return label;
-    
+
     return null;
   }
 }

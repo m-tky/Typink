@@ -37,10 +37,10 @@ class HandwritingPainter extends CustomPainter {
     for (int i = 0; i < strokes.length; i++) {
       final stroke = strokes[i];
       final isSelected = selectedIndices.contains(i);
-      
+
       paint.color = isSelected ? Colors.blue : stroke.color;
       paint.strokeWidth = stroke.strokeWidth;
-      
+
       if (isSelected && activeTransform != null) {
         // 変形中のプレビュー表示
         final transformedPoints = stroke.points.map((p) {
@@ -49,7 +49,7 @@ class HandwritingPainter extends CustomPainter {
           return Offset(tVec.x, tVec.y);
         }).toList();
         _drawStrokeNormalized(canvas, transformedPoints, size, paint);
-        
+
         // 元のストロークを薄く表示
         paint.color = paint.color.withOpacity(0.3);
         _drawStrokeNormalized(canvas, stroke.points, size, paint);
@@ -65,21 +65,23 @@ class HandwritingPainter extends CustomPainter {
       for (final p in lassoPoints!.skip(1)) {
         lassoPath.lineTo(p.dx, p.dy);
       }
-      
-      canvas.drawPath(lassoPath, Paint()
-        ..color = Colors.blue.withOpacity(0.2)
-        ..style = PaintingStyle.fill
-      );
-      canvas.drawPath(lassoPath, Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0
-      );
+
+      canvas.drawPath(
+          lassoPath,
+          Paint()
+            ..color = Colors.blue.withOpacity(0.2)
+            ..style = PaintingStyle.fill);
+      canvas.drawPath(
+          lassoPath,
+          Paint()
+            ..color = Colors.blue
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0);
     }
 
     // 変形ハンドルとバウンディングボックスの描画
     if (selectedIndices.isNotEmpty && activeTransform == null) {
-        _drawSelectionUI(canvas, size);
+      _drawSelectionUI(canvas, size);
     }
 
     // 消しゴムのカーソルを描画
@@ -88,7 +90,7 @@ class HandwritingPainter extends CustomPainter {
         ..color = Colors.blue.withOpacity(0.2)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(cursorPosition!, cursorRadius!, cursorPaint);
-      
+
       final outlinePaint = Paint()
         ..color = Colors.blue.withOpacity(0.4)
         ..style = PaintingStyle.stroke
@@ -97,16 +99,20 @@ class HandwritingPainter extends CustomPainter {
     }
   }
 
-  void _drawStrokeNormalized(Canvas canvas, List<Offset> points, Size size, Paint paint) {
+  void _drawStrokeNormalized(
+      Canvas canvas, List<Offset> points, Size size, Paint paint) {
     if (points.isEmpty) return;
-    
-    final pixelPoints = points.map((p) => Offset(
-      p.dx / HandwritingNotifier.canvasWidth * size.width, 
-      p.dy / HandwritingNotifier.canvasHeight * size.height,
-    )).toList();
+
+    final pixelPoints = points
+        .map((p) => Offset(
+              p.dx / HandwritingNotifier.canvasWidth * size.width,
+              p.dy / HandwritingNotifier.canvasHeight * size.height,
+            ))
+        .toList();
 
     if (pixelPoints.length == 1) {
-      canvas.drawCircle(pixelPoints.first, paint.strokeWidth / 2, paint..style = PaintingStyle.fill);
+      canvas.drawCircle(pixelPoints.first, paint.strokeWidth / 2,
+          paint..style = PaintingStyle.fill);
       paint.style = PaintingStyle.stroke;
       return;
     }
@@ -127,7 +133,10 @@ class HandwritingPainter extends CustomPainter {
     if (selectedStrokes.isEmpty) return;
 
     // 計算 (Normalized units)
-    double minX = double.infinity, minY = double.infinity, maxX = double.negativeInfinity, maxY = double.negativeInfinity;
+    double minX = double.infinity,
+        minY = double.infinity,
+        maxX = double.negativeInfinity,
+        maxY = double.negativeInfinity;
     for (final s in selectedStrokes) {
       for (final p in s.points) {
         if (p.dx < minX) minX = p.dx;
@@ -149,7 +158,7 @@ class HandwritingPainter extends CustomPainter {
       ..color = Colors.blue
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
-    
+
     canvas.drawRect(rect.inflate(4), paint);
 
     // Handles
@@ -170,14 +179,20 @@ class HandwritingPainter extends CustomPainter {
     ];
 
     for (final corner in corners) {
-      canvas.drawRect(Rect.fromCenter(center: corner, width: handleSize, height: handleSize), handlePaint);
-      canvas.drawRect(Rect.fromCenter(center: corner, width: handleSize, height: handleSize), handleOutline);
+      canvas.drawRect(
+          Rect.fromCenter(
+              center: corner, width: handleSize, height: handleSize),
+          handlePaint);
+      canvas.drawRect(
+          Rect.fromCenter(
+              center: corner, width: handleSize, height: handleSize),
+          handleOutline);
     }
   }
 
   @override
   bool shouldRepaint(covariant HandwritingPainter oldDelegate) {
-    return true; 
+    return true;
   }
 }
 
@@ -213,14 +228,15 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
-        
+
         return MouseRegion(
           cursor: _getCursor(tool, selectedIndices, activeTransform, size),
           onHover: (event) {
             if (tool == DrawingTool.eraser) {
               setState(() => _cursorPosition = event.localPosition);
             } else {
-              if (_cursorPosition != null) setState(() => _cursorPosition = null);
+              if (_cursorPosition != null)
+                setState(() => _cursorPosition = null);
             }
           },
           onExit: (_) => setState(() => _cursorPosition = null),
@@ -228,12 +244,15 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
             onPanStart: (details) {
               setState(() => _cursorPosition = details.localPosition);
               if (tool == DrawingTool.pen) {
-                notifier.startStroke(details.localPosition, size, color: color, width: width);
+                notifier.startStroke(details.localPosition, size,
+                    color: color, width: width);
               } else if (tool == DrawingTool.eraser) {
-                notifier.eraseAt(details.localPosition, size, widget.figureId, eraserWidth: eraserWidth);
+                notifier.eraseAt(details.localPosition, size, widget.figureId,
+                    eraserWidth: eraserWidth);
               } else if (tool == DrawingTool.lasso) {
                 // Check if clicking on handle or selection
-                final handle = _getHandleAt(details.localPosition, selectedIndices, strokes, size);
+                final handle = _getHandleAt(
+                    details.localPosition, selectedIndices, strokes, size);
                 if (handle != null) {
                   _activeHandle = handle;
                   _dragStart = details.localPosition;
@@ -249,10 +268,12 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
               if (tool == DrawingTool.pen) {
                 notifier.updateStroke(details.localPosition, size);
               } else if (tool == DrawingTool.eraser) {
-                notifier.eraseAt(details.localPosition, size, widget.figureId, eraserWidth: eraserWidth);
+                notifier.eraseAt(details.localPosition, size, widget.figureId,
+                    eraserWidth: eraserWidth);
               } else if (tool == DrawingTool.lasso) {
                 if (_activeHandle != null) {
-                   _updateTransform(details.localPosition, selectedIndices, strokes, size);
+                  _updateTransform(
+                      details.localPosition, selectedIndices, strokes, size);
                 } else if (_lassoPoints != null) {
                   setState(() => _lassoPoints!.add(details.localPosition));
                 }
@@ -268,7 +289,8 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
                   _activeHandle = null;
                   _dragStart = null;
                 } else if (_lassoPoints != null) {
-                  notifier.selectStrokesInPath(widget.figureId, _lassoPoints!, size);
+                  notifier.selectStrokesInPath(
+                      widget.figureId, _lassoPoints!, size);
                   setState(() => _lassoPoints = null);
                 }
               }
@@ -281,7 +303,8 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
                 lassoPoints: _lassoPoints,
                 currentStroke: notifier.currentStroke,
                 cursorPosition: _cursorPosition,
-                cursorRadius: width / 2 * (size.width / HandwritingNotifier.canvasWidth),
+                cursorRadius:
+                    width / 2 * (size.width / HandwritingNotifier.canvasWidth),
                 showEraserCursor: tool == DrawingTool.eraser,
               ),
               size: Size.infinite,
@@ -292,28 +315,40 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
     );
   }
 
-  MouseCursor _getCursor(DrawingTool tool, Set<int> selected, Matrix4? transform, Size size) {
-     if (tool == DrawingTool.eraser) return SystemMouseCursors.none;
-     return MouseCursor.defer;
+  MouseCursor _getCursor(
+      DrawingTool tool, Set<int> selected, Matrix4? transform, Size size) {
+    if (tool == DrawingTool.eraser) return SystemMouseCursors.none;
+    return MouseCursor.defer;
   }
 
-  String? _getHandleAt(Offset pos, Set<int> selected, List<Stroke> strokes, Size size) {
+  String? _getHandleAt(
+      Offset pos, Set<int> selected, List<Stroke> strokes, Size size) {
     if (selected.isEmpty) return null;
     final rect = _getSelectionPixelRect(selected, strokes, size).inflate(4);
-    
+
     // Check handles (TL, TR, BL, BR) with 48x48 hit area
     const hitSize = 48.0;
-    if (Rect.fromCenter(center: rect.topLeft, width: hitSize, height: hitSize).contains(pos)) return 'tl';
-    if (Rect.fromCenter(center: rect.topRight, width: hitSize, height: hitSize).contains(pos)) return 'tr';
-    if (Rect.fromCenter(center: rect.bottomLeft, width: hitSize, height: hitSize).contains(pos)) return 'bl';
-    if (Rect.fromCenter(center: rect.bottomRight, width: hitSize, height: hitSize).contains(pos)) return 'br';
-    
+    if (Rect.fromCenter(center: rect.topLeft, width: hitSize, height: hitSize)
+        .contains(pos)) return 'tl';
+    if (Rect.fromCenter(center: rect.topRight, width: hitSize, height: hitSize)
+        .contains(pos)) return 'tr';
+    if (Rect.fromCenter(
+            center: rect.bottomLeft, width: hitSize, height: hitSize)
+        .contains(pos)) return 'bl';
+    if (Rect.fromCenter(
+            center: rect.bottomRight, width: hitSize, height: hitSize)
+        .contains(pos)) return 'br';
+
     if (rect.contains(pos)) return 'move';
     return null;
   }
 
-  Rect _getSelectionPixelRect(Set<int> selected, List<Stroke> strokes, Size size) {
-    double minX = double.infinity, minY = double.infinity, maxX = double.negativeInfinity, maxY = double.negativeInfinity;
+  Rect _getSelectionPixelRect(
+      Set<int> selected, List<Stroke> strokes, Size size) {
+    double minX = double.infinity,
+        minY = double.infinity,
+        maxX = double.negativeInfinity,
+        maxY = double.negativeInfinity;
     for (final index in selected) {
       if (index >= strokes.length) continue;
       final s = strokes[index];
@@ -333,14 +368,15 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
     );
   }
 
-  void _updateTransform(Offset current, Set<int> selected, List<Stroke> strokes, Size size) {
+  void _updateTransform(
+      Offset current, Set<int> selected, List<Stroke> strokes, Size size) {
     if (_dragStart == null || _activeHandle == null) return;
-    
+
     final rect = _getSelectionPixelRect(selected, strokes, size);
     if (rect.isEmpty) return;
-    
+
     final notifier = ref.read(handwritingProvider.notifier);
-    
+
     // Normalized units for Matrix
     final normRect = Rect.fromLTRB(
       rect.left / size.width * HandwritingNotifier.canvasWidth,
@@ -349,8 +385,12 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
       rect.bottom / size.height * HandwritingNotifier.canvasHeight,
     );
 
-    final dx = (current.dx - _dragStart!.dx) / size.width * HandwritingNotifier.canvasWidth;
-    final dy = (current.dy - _dragStart!.dy) / size.height * HandwritingNotifier.canvasHeight;
+    final dx = (current.dx - _dragStart!.dx) /
+        size.width *
+        HandwritingNotifier.canvasWidth;
+    final dy = (current.dy - _dragStart!.dy) /
+        size.height *
+        HandwritingNotifier.canvasHeight;
 
     if (_activeHandle == 'move') {
       final matrix = Matrix4.identity()..translate(dx, dy);
@@ -359,7 +399,7 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
       // Scaling
       double sx = 1.0, sy = 1.0;
       Offset pivot = Offset.zero;
-      
+
       switch (_activeHandle) {
         case 'tl':
           pivot = normRect.bottomRight;
@@ -382,7 +422,7 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
           sy = (normRect.height + dy) / normRect.height;
           break;
       }
-      
+
       // Clamp scale to avoid flipping/zero
       sx = sx.clamp(0.1, 10.0);
       sy = sy.clamp(0.1, 10.0);
@@ -391,7 +431,7 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
         ..translate(pivot.dx, pivot.dy)
         ..scale(sx, sy)
         ..translate(-pivot.dx, -pivot.dy);
-      
+
       notifier.updateActiveTransform(widget.figureId, matrix);
     }
   }

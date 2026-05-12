@@ -27,7 +27,7 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
   double get editorFontSize => fontSize;
   @override
   double get editorLineHeight => lineHeight;
-  
+
   HeadlessEditorPainter({
     required this.view,
     this.fontSize = 14.0,
@@ -64,14 +64,14 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
 
     for (int i = 0; i < view.lines.length; i++) {
       final line = view.lines[i];
-      
+
       // Calculate line number string
       final absoluteLineIdx = baseLineIndex + i;
       String lineNumStr = '${absoluteLineIdx + 1}';
       if (settings.relativeLineNumbers) {
         final rel = (absoluteLineIdx - view.cursorLine.toInt()).abs();
         if (rel == 0) {
-          lineNumStr = '${absoluteLineIdx + 1}'; 
+          lineNumStr = '${absoluteLineIdx + 1}';
         } else {
           lineNumStr = '$rel';
         }
@@ -81,27 +81,30 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
       lineNumPainter.text = TextSpan(
         text: lineNumStr,
         style: textStyle.copyWith(
-          fontSize: fontSize * 0.85, 
-          color: absoluteLineIdx == view.cursorLine.toInt() 
-            ? cursorColor.withOpacity(0.8) 
-            : textStyle.color?.withOpacity(0.4) ?? Colors.grey
-        ),
+            fontSize: fontSize * 0.85,
+            color: absoluteLineIdx == view.cursorLine.toInt()
+                ? cursorColor.withOpacity(0.8)
+                : textStyle.color?.withOpacity(0.4) ?? Colors.grey),
       );
       lineNumPainter.layout();
-      lineNumPainter.paint(canvas, Offset(leftMargin - 8 - lineNumPainter.width, currentY + (fontSize * lineHeight - fontSize * 0.85) / 2));
+      lineNumPainter.paint(
+          canvas,
+          Offset(leftMargin - 8 - lineNumPainter.width,
+              currentY + (fontSize * lineHeight - fontSize * 0.85) / 2));
 
       textPainter.text = buildTextSpan(line);
-      
+
       const double arrowWidth = 16.0;
-      textPainter.layout(maxWidth: size.width - leftMargin - rightPadding - arrowWidth);
+      textPainter.layout(
+          maxWidth: size.width - leftMargin - rightPadding - arrowWidth);
 
       double yOffset = 0;
       final metrics = textPainter.computeLineMetrics();
-      
+
       if (metrics.isEmpty && absoluteLineIdx == view.cursorLine.toInt()) {
         // Special case: empty cursor line
         _drawCursor(canvas, textPainter, currentY, leftMargin);
-        
+
         if (settings.showWhitespace) {
           final symbolPainter = TextPainter(textDirection: TextDirection.ltr);
           symbolPainter.text = TextSpan(
@@ -113,7 +116,10 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
             ),
           );
           symbolPainter.layout();
-          symbolPainter.paint(canvas, Offset(leftMargin, currentY + (textPainter.height - symbolPainter.height) / 2));
+          symbolPainter.paint(
+              canvas,
+              Offset(leftMargin,
+                  currentY + (textPainter.height - symbolPainter.height) / 2));
         }
       }
 
@@ -126,22 +132,25 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
         canvas.save();
         // Clip to this physical line segment
         canvas.clipRect(Rect.fromLTWH(0, lineTop, size.width, metric.height));
-        
+
         // 1. Draw Selection (using translated context)
-        if ((view.mode == VimMode.visual || view.mode == VimMode.visualLine) && view.selectionStartLine != null) {
+        if ((view.mode == VimMode.visual || view.mode == VimMode.visualLine) &&
+            view.selectionStartLine != null) {
           _drawSelection(canvas, textPainter, currentY, xOffset, i, size.width);
         }
 
         // 2. Draw Highlights
         if (view.searchQuery != null && view.searchQuery!.isNotEmpty) {
-          _drawSearchHighlights(canvas, textPainter, currentY, xOffset, view.searchQuery!);
+          _drawSearchHighlights(
+              canvas, textPainter, currentY, xOffset, view.searchQuery!);
         }
 
         // 3. Draw Text
         textPainter.paint(canvas, Offset(xOffset, currentY));
 
         // 4. Draw Diagnostics
-        _drawDiagnostics(canvas, textPainter, currentY, xOffset, absoluteLineIdx, size);
+        _drawDiagnostics(
+            canvas, textPainter, currentY, xOffset, absoluteLineIdx, size);
 
         // 5. Draw Cursor
         if (absoluteLineIdx == view.cursorLine.toInt()) {
@@ -162,17 +171,23 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
           if (isLastSegment) {
             symbolPainter.text = TextSpan(text: '↵', style: style);
             symbolPainter.layout();
-            symbolPainter.paint(canvas, Offset(xOffset + metric.width, lineTop + (metric.height - symbolPainter.height) / 2));
+            symbolPainter.paint(
+                canvas,
+                Offset(xOffset + metric.width,
+                    lineTop + (metric.height - symbolPainter.height) / 2));
           }
 
           if (m > 0) {
             symbolPainter.text = TextSpan(text: '↪', style: style);
             symbolPainter.layout();
             // Positioned at the leftmost part of the text indent
-            symbolPainter.paint(canvas, Offset(leftMargin, lineTop + (metric.height - symbolPainter.height) / 2));
+            symbolPainter.paint(
+                canvas,
+                Offset(leftMargin,
+                    lineTop + (metric.height - symbolPainter.height) / 2));
           }
         }
-        
+
         yOffset += metric.height;
       }
 
@@ -180,9 +195,11 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     }
   }
 
-  void _drawSelection(Canvas canvas, TextPainter textPainter, double currentY, double leftMargin, int lineIdx, double canvasWidth) {
-    if (view.selectionStartLine == null || view.selectionStartColumnU16 == null) return;
-    
+  void _drawSelection(Canvas canvas, TextPainter textPainter, double currentY,
+      double leftMargin, int lineIdx, double canvasWidth) {
+    if (view.selectionStartLine == null || view.selectionStartColumnU16 == null)
+      return;
+
     final startLine = view.selectionStartLine!.toInt();
     final startCol = view.selectionStartColumnU16!.toInt();
     final cursorLine = view.cursorLine.toInt();
@@ -226,11 +243,11 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     final boxes = textPainter.getBoxesForSelection(selection);
     // Use a more prominent opacity for Neovim-like feel (0.4 vs 0.25)
     final paint = Paint()..color = cursorColor.withOpacity(0.4);
-    
+
     for (final box in boxes) {
       double startX = leftMargin + box.left;
       double width = box.right - box.left;
-      
+
       // For visual line mode, if it's the end of text or empty line,
       // we might want to extend the highlight to represent the newline or full line.
       if (isVisualLine && (selEnd == textLen || textLen == 0)) {
@@ -263,7 +280,8 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     }
   }
 
-  void _drawSearchHighlights(Canvas canvas, TextPainter textPainter, double currentY, double leftMargin, String query) {
+  void _drawSearchHighlights(Canvas canvas, TextPainter textPainter,
+      double currentY, double leftMargin, String query) {
     if (query.isEmpty) return;
     final text = textPainter.text?.toPlainText() ?? '';
     final matches = <RegExpMatch>[];
@@ -294,10 +312,11 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     }
   }
 
-  void _drawCursor(Canvas canvas, TextPainter textPainter, double currentY, double leftMargin) {
+  void _drawCursor(Canvas canvas, TextPainter textPainter, double currentY,
+      double leftMargin) {
     final charIdx = view.cursorColumnU16.toInt();
     final textLength = textPainter.text?.toPlainText().length ?? 0;
-    
+
     double cursorX = 0;
     double cursorY = 0;
     double cursorHeight = fontSize * lineHeight;
@@ -306,18 +325,21 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     // Use character box metrics for the most accurate positioning and sizing.
     // This ensures headings and other styled text have correctly aligned cursors.
     final bool isAtLineEnd = charIdx >= textLength;
-    final int lookupIdx = isAtLineEnd ? (textLength - 1).clamp(0, textLength) : charIdx;
+    final int lookupIdx =
+        isAtLineEnd ? (textLength - 1).clamp(0, textLength) : charIdx;
 
     if (textLength > 0) {
       final boxes = textPainter.getBoxesForSelection(
-        TextSelection(baseOffset: lookupIdx, extentOffset: (lookupIdx + 1).clamp(0, textLength)),
+        TextSelection(
+            baseOffset: lookupIdx,
+            extentOffset: (lookupIdx + 1).clamp(0, textLength)),
       );
 
       if (boxes.isNotEmpty) {
         final box = boxes.first;
         cursorX = isAtLineEnd ? box.right : box.left;
         cursorY = box.top;
-        cursorHeight = box.bottom - box.top; 
+        cursorHeight = box.bottom - box.top;
         charWidth = box.right - box.left;
       } else {
         // Fallback to getOffsetForCaret if boxes are empty
@@ -348,23 +370,26 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     } else {
       // Block cursor in normal/visual mode
       charWidth = charWidth.clamp(fontSize * 0.2, fontSize * 1.5);
-      
+
       final p = Paint()
         ..color = cursorColor.withOpacity(0.8)
         ..style = PaintingStyle.fill;
-        
+
       canvas.drawRect(
-        Rect.fromLTWH(leftMargin + cursorX, finalCursorY, charWidth, cursorHeight),
+        Rect.fromLTWH(
+            leftMargin + cursorX, finalCursorY, charWidth, cursorHeight),
         p,
       );
     }
   }
 
-  void _drawDiagnostics(Canvas canvas, TextPainter textPainter, double currentY, double leftMargin, int lineIdx, Size size) {
+  void _drawDiagnostics(Canvas canvas, TextPainter textPainter, double currentY,
+      double leftMargin, int lineIdx, Size size) {
     if (diagnostics.items.isEmpty) return;
 
     final bool isFresh = diagnostics.version == currentVersion;
-    final bool isTyping = DateTime.now().difference(lastInputTime).inMilliseconds < 300;
+    final bool isTyping =
+        DateTime.now().difference(lastInputTime).inMilliseconds < 300;
     final bool isStale = diagnostics.version == currentVersion - 1;
     final bool showFaded = isStale && (isTyping || isComposing);
 
@@ -375,7 +400,8 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     final textLen = text.length;
 
     // Filter diagnostics for this line
-    final lineDiags = diagnostics.items.where((d) => d.line.toInt() == lineIdx).toList();
+    final lineDiags =
+        diagnostics.items.where((d) => d.line.toInt() == lineIdx).toList();
     if (lineDiags.isEmpty) return;
 
     // 1. Draw Gutter Signs
@@ -385,12 +411,12 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     for (final diag in lineDiags) {
       final int startCol = diag.column.toInt();
       final int endCol = (startCol + 1).clamp(0, textLen);
-      
+
       final selection = TextSelection(
         baseOffset: startCol.clamp(0, textLen),
         extentOffset: endCol.clamp(0, textLen),
       );
-      
+
       final boxes = textPainter.getBoxesForSelection(selection);
       final Color color = diag.severity == 1 ? Colors.red : Colors.orange;
       final paint = Paint()
@@ -400,16 +426,19 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
 
       for (final box in boxes) {
         final double y = currentY + box.bottom;
-        canvas.drawLine(Offset(leftMargin + box.left, y), Offset(leftMargin + box.right, y), paint);
+        canvas.drawLine(Offset(leftMargin + box.left, y),
+            Offset(leftMargin + box.right, y), paint);
       }
     }
 
     // 3. Draw Virtual Text (LSP message at line end)
     final firstDiag = lineDiags.first;
-    _drawVirtualText(canvas, textPainter, currentY, leftMargin, firstDiag, opacity, size);
+    _drawVirtualText(
+        canvas, textPainter, currentY, leftMargin, firstDiag, opacity, size);
   }
 
-  void _drawGutterSign(Canvas canvas, double currentY, bridge.TypstDiagnostic diag, double opacity) {
+  void _drawGutterSign(Canvas canvas, double currentY,
+      bridge.TypstDiagnostic diag, double opacity) {
     final Color color = diag.severity == 1 ? Colors.red : Colors.orange;
     final double dotSize = 4.0;
     final double centerX = 12.0; // In the left margin (10-20 range)
@@ -418,13 +447,22 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
     final paint = Paint()
       ..color = color.withOpacity(opacity)
       ..style = PaintingStyle.fill;
-    
+
     canvas.drawCircle(Offset(centerX, centerY), dotSize / 2, paint);
   }
 
-  void _drawVirtualText(Canvas canvas, TextPainter mainTextPainter, double currentY, double leftMargin, bridge.TypstDiagnostic diag, double opacity, Size size) {
-    final Color color = diag.severity == 1 ? Colors.red.withOpacity(0.7) : Colors.orange.withOpacity(0.7);
-    
+  void _drawVirtualText(
+      Canvas canvas,
+      TextPainter mainTextPainter,
+      double currentY,
+      double leftMargin,
+      bridge.TypstDiagnostic diag,
+      double opacity,
+      Size size) {
+    final Color color = diag.severity == 1
+        ? Colors.red.withOpacity(0.7)
+        : Colors.orange.withOpacity(0.7);
+
     final vtPainter = TextPainter(
       text: TextSpan(
         text: "  // ${diag.message}",
@@ -441,8 +479,9 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
 
     // Calculate available width at the end of the line
     final double textWidth = mainTextPainter.width;
-    final double availableWidth = (size.width - leftMargin - textWidth - 20).clamp(0.0, size.width * 0.4);
-    
+    final double availableWidth =
+        (size.width - leftMargin - textWidth - 20).clamp(0.0, size.width * 0.4);
+
     if (availableWidth < 50) return; // Too narrow to show anything useful
 
     vtPainter.layout(maxWidth: availableWidth);
@@ -452,15 +491,15 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
   @override
   bool shouldRepaint(covariant HeadlessEditorPainter oldDelegate) {
     return oldDelegate.view != view ||
-           oldDelegate.fontSize != fontSize ||
-           oldDelegate.lineHeight != lineHeight ||
-           oldDelegate.textStyle != textStyle ||
-           oldDelegate.cursorColor != cursorColor ||
-           oldDelegate.settings != settings ||
-           oldDelegate.diagnostics != diagnostics ||
-           oldDelegate.currentVersion != currentVersion ||
-           oldDelegate.lastInputTime != lastInputTime ||
-           oldDelegate.isComposing != isComposing ||
-           oldDelegate.activeTheme != activeTheme;
+        oldDelegate.fontSize != fontSize ||
+        oldDelegate.lineHeight != lineHeight ||
+        oldDelegate.textStyle != textStyle ||
+        oldDelegate.cursorColor != cursorColor ||
+        oldDelegate.settings != settings ||
+        oldDelegate.diagnostics != diagnostics ||
+        oldDelegate.currentVersion != currentVersion ||
+        oldDelegate.lastInputTime != lastInputTime ||
+        oldDelegate.isComposing != isComposing ||
+        oldDelegate.activeTheme != activeTheme;
   }
 }

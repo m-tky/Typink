@@ -8,7 +8,8 @@ class WorkspaceSelectorPage extends ConsumerStatefulWidget {
   const WorkspaceSelectorPage({super.key});
 
   @override
-  ConsumerState<WorkspaceSelectorPage> createState() => _WorkspaceSelectorPageState();
+  ConsumerState<WorkspaceSelectorPage> createState() =>
+      _WorkspaceSelectorPageState();
 }
 
 class _WorkspaceSelectorPageState extends ConsumerState<WorkspaceSelectorPage> {
@@ -40,22 +41,28 @@ class _WorkspaceSelectorPageState extends ConsumerState<WorkspaceSelectorPage> {
                   icon: const Icon(Icons.folder_open),
                   label: const Text('Open Workspace'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 16),
                   ),
                   onPressed: () async {
                     try {
-                      String? result = await FilePicker.platform.getDirectoryPath();
+                      String? result =
+                          await FilePicker.platform.getDirectoryPath();
                       if (result != null) {
-                        await ref.read(workspaceManagerProvider).openWorkspace(Directory(result));
+                        await ref
+                            .read(workspaceManagerProvider)
+                            .openWorkspace(Directory(result));
                       }
                     } catch (e) {
                       debugPrint('File picker error: $e');
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Error: ${e.toString().contains('zenity') ? 'Zenity is missing. Please install it or use: nix-shell -p flutter zenity' : e.toString()}'),
+                            content: Text(
+                                'Error: ${e.toString().contains('zenity') ? 'Zenity is missing. Please install it or use: nix-shell -p flutter zenity' : e.toString()}'),
                             duration: const Duration(seconds: 10),
-                            action: SnackBarAction(label: 'Dismiss', onPressed: () {}),
+                            action: SnackBarAction(
+                                label: 'Dismiss', onPressed: () {}),
                           ),
                         );
                       }
@@ -63,12 +70,16 @@ class _WorkspaceSelectorPageState extends ConsumerState<WorkspaceSelectorPage> {
                   },
                 ),
                 const SizedBox(height: 16),
-                const Text('OR', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                const Text('OR',
+                    style: TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 16),
                 const Text(
                   'Recommendation: Select a directory synced with Syncthing or Dropbox for multi-device support.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey),
                 ),
               ],
             ),

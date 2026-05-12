@@ -22,19 +22,20 @@ class _DrawingPadState extends ConsumerState<DrawingPad> {
     final notifier = ref.read(handwritingProvider.notifier);
     final activeTool = ref.watch(activeToolProvider);
     final activeColor = ref.watch(activeColorProvider);
-    final activeWidth = activeTool == DrawingTool.pen 
-        ? ref.watch(penWidthProvider) 
+    final activeWidth = activeTool == DrawingTool.pen
+        ? ref.watch(penWidthProvider)
         : ref.watch(eraserWidthProvider);
 
-    final isVertical = settings.toolbarPosition == ToolbarPosition.left || 
-                       settings.toolbarPosition == ToolbarPosition.right;
+    final isVertical = settings.toolbarPosition == ToolbarPosition.left ||
+        settings.toolbarPosition == ToolbarPosition.right;
 
     return Scaffold(
       backgroundColor: Colors.black.withOpacity(0.3),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 1,
-        title: Text('Editing ${widget.figureId}', style: const TextStyle(fontSize: 16)),
+        title: Text('Editing ${widget.figureId}',
+            style: const TextStyle(fontSize: 16)),
         actions: [
           IconButton(
             icon: Icon(_showGrid ? Icons.grid_on : Icons.grid_off),
@@ -66,19 +67,26 @@ class _DrawingPadState extends ConsumerState<DrawingPad> {
             builder: (context) => IconButton(
               icon: const Icon(Icons.settings),
               tooltip: 'Settings',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => const SettingsPanel()),
-            ),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const SettingsPanel()),
+              ),
             ),
           ),
           const SizedBox(width: 16),
         ],
       ),
-      body: _buildLayout(isVertical, settings, activeTool, activeColor, activeWidth, notifier),
+      body: _buildLayout(
+          isVertical, settings, activeTool, activeColor, activeWidth, notifier),
     );
   }
 
-  Widget _buildLayout(bool isVertical, AppSettings settings, DrawingTool activeTool, Color activeColor, double activeWidth, HandwritingNotifier notifier) {
+  Widget _buildLayout(
+      bool isVertical,
+      AppSettings settings,
+      DrawingTool activeTool,
+      Color activeColor,
+      double activeWidth,
+      HandwritingNotifier notifier) {
     final canvas = Expanded(
       child: Center(
         child: Padding(
@@ -89,7 +97,10 @@ class _DrawingPadState extends ConsumerState<DrawingPad> {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.8),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 5),
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 20,
+                      spreadRadius: 5),
                 ],
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -116,15 +127,15 @@ class _DrawingPadState extends ConsumerState<DrawingPad> {
 
     if (isVertical) {
       return Row(
-        children: settings.toolbarPosition == ToolbarPosition.left 
-          ? [toolbar, canvas] 
-          : [canvas, toolbar],
+        children: settings.toolbarPosition == ToolbarPosition.left
+            ? [toolbar, canvas]
+            : [canvas, toolbar],
       );
     } else {
       return Column(
-        children: settings.toolbarPosition == ToolbarPosition.top 
-          ? [toolbar, canvas] 
-          : [canvas, toolbar],
+        children: settings.toolbarPosition == ToolbarPosition.top
+            ? [toolbar, canvas]
+            : [canvas, toolbar],
       );
     }
   }
@@ -149,28 +160,36 @@ class _Toolbar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isVertical = settings.toolbarPosition == ToolbarPosition.left || 
-                       settings.toolbarPosition == ToolbarPosition.right;
+    final isVertical = settings.toolbarPosition == ToolbarPosition.left ||
+        settings.toolbarPosition == ToolbarPosition.right;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: _getBorderRadius(),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10)
+        ],
       ),
       child: SafeArea(
-        child: isVertical ? _buildVertical(context, ref) : _buildHorizontal(context, ref),
+        child: isVertical
+            ? _buildVertical(context, ref)
+            : _buildHorizontal(context, ref),
       ),
     );
   }
 
   BorderRadius _getBorderRadius() {
     switch (settings.toolbarPosition) {
-      case ToolbarPosition.top: return const BorderRadius.vertical(bottom: Radius.circular(16));
-      case ToolbarPosition.bottom: return const BorderRadius.vertical(top: Radius.circular(16));
-      case ToolbarPosition.left: return const BorderRadius.horizontal(right: Radius.circular(16));
-      case ToolbarPosition.right: return const BorderRadius.horizontal(left: Radius.circular(16));
+      case ToolbarPosition.top:
+        return const BorderRadius.vertical(bottom: Radius.circular(16));
+      case ToolbarPosition.bottom:
+        return const BorderRadius.vertical(top: Radius.circular(16));
+      case ToolbarPosition.left:
+        return const BorderRadius.horizontal(right: Radius.circular(16));
+      case ToolbarPosition.right:
+        return const BorderRadius.horizontal(left: Radius.circular(16));
     }
   }
 
@@ -231,19 +250,22 @@ class _Toolbar extends ConsumerWidget {
         icon: Icons.brush,
         label: 'Pen',
         isSelected: activeTool == DrawingTool.pen,
-        onTap: () => ref.read(activeToolProvider.notifier).state = DrawingTool.pen,
+        onTap: () =>
+            ref.read(activeToolProvider.notifier).state = DrawingTool.pen,
       ),
       _ToolButton(
         icon: Icons.cleaning_services,
         label: 'Eraser',
         isSelected: activeTool == DrawingTool.eraser,
-        onTap: () => ref.read(activeToolProvider.notifier).state = DrawingTool.eraser,
+        onTap: () =>
+            ref.read(activeToolProvider.notifier).state = DrawingTool.eraser,
       ),
       _ToolButton(
         icon: Icons.gesture,
         label: 'Lasso',
         isSelected: activeTool == DrawingTool.lasso,
-        onTap: () => ref.read(activeToolProvider.notifier).state = DrawingTool.lasso,
+        onTap: () =>
+            ref.read(activeToolProvider.notifier).state = DrawingTool.lasso,
       ),
     ];
     return vertical ? Column(children: children) : Row(children: children);
@@ -263,7 +285,9 @@ class _Toolbar extends ConsumerWidget {
           onLongPress: () async {
             final newColor = await showColorWheelPicker(context, color);
             if (newColor != null) {
-              ref.read(settingsProvider.notifier).replacePaletteColor(index, newColor);
+              ref
+                  .read(settingsProvider.notifier)
+                  .replacePaletteColor(index, newColor);
               ref.read(activeColorProvider.notifier).state = newColor;
             }
           },
@@ -278,7 +302,9 @@ class _Toolbar extends ConsumerWidget {
                 color: isSelected ? Colors.white : Colors.transparent,
                 width: 3,
               ),
-              boxShadow: isSelected ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)] : null,
+              boxShadow: isSelected
+                  ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)]
+                  : null,
             ),
           ),
         );
@@ -299,20 +325,32 @@ class _Toolbar extends ConsumerWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const SweepGradient(
-              colors: [Colors.red, Colors.yellow, Colors.green, Colors.cyan, Colors.blue, Colors.purple, Colors.red],
+              colors: [
+                Colors.red,
+                Colors.yellow,
+                Colors.green,
+                Colors.cyan,
+                Colors.blue,
+                Colors.purple,
+                Colors.red
+              ],
             ),
             border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4)],
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4)
+            ],
           ),
-          child: const Center(child: Icon(Icons.colorize, size: 16, color: Colors.white)),
+          child: const Center(
+              child: Icon(Icons.colorize, size: 16, color: Colors.white)),
         ),
       ),
     ];
 
     final isEraser = activeTool == DrawingTool.eraser;
-    final paletteWidget = vertical 
-      ? Column(mainAxisSize: MainAxisSize.min, children: children) 
-      : SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: children));
+    final paletteWidget = vertical
+        ? Column(mainAxisSize: MainAxisSize.min, children: children)
+        : SingleChildScrollView(
+            scrollDirection: Axis.horizontal, child: Row(children: children));
 
     return Opacity(
       opacity: isEraser ? 0.3 : 1.0,
@@ -324,13 +362,13 @@ class _Toolbar extends ConsumerWidget {
   }
 
   Widget _buildWidthSlider(WidgetRef ref, bool vertical) {
-    final activeWidth = activeTool == DrawingTool.pen 
-        ? ref.watch(penWidthProvider) 
+    final activeWidth = activeTool == DrawingTool.pen
+        ? ref.watch(penWidthProvider)
         : ref.watch(eraserWidthProvider);
-    final widthNotifier = activeTool == DrawingTool.pen 
-        ? ref.read(penWidthProvider.notifier) 
+    final widthNotifier = activeTool == DrawingTool.pen
+        ? ref.read(penWidthProvider.notifier)
         : ref.read(eraserWidthProvider.notifier);
-    
+
     final min = activeTool == DrawingTool.pen ? 1.0 : 5.0;
     final max = activeTool == DrawingTool.pen ? 15.0 : 60.0;
     final divisions = activeTool == DrawingTool.pen ? 14 : 11;
@@ -341,25 +379,25 @@ class _Toolbar extends ConsumerWidget {
         thumbColor: Colors.blue,
         overlayColor: Colors.blue.withAlpha(32),
       ),
-      child: vertical 
-        ? RotatedBox(
-            quarterTurns: 3,
-            child: Slider(
+      child: vertical
+          ? RotatedBox(
+              quarterTurns: 3,
+              child: Slider(
+                value: activeWidth,
+                min: min,
+                max: max,
+                divisions: divisions,
+                onChanged: (val) => widthNotifier.state = val,
+              ),
+            )
+          : Slider(
               value: activeWidth,
               min: min,
               max: max,
               divisions: divisions,
+              label: activeWidth.round().toString(),
               onChanged: (val) => widthNotifier.state = val,
             ),
-          )
-        : Slider(
-            value: activeWidth,
-            min: min,
-            max: max,
-            divisions: divisions,
-            label: activeWidth.round().toString(),
-            onChanged: (val) => widthNotifier.state = val,
-          ),
     );
 
     if (vertical) {
@@ -369,7 +407,9 @@ class _Toolbar extends ConsumerWidget {
           const SizedBox(height: 8),
           slider,
           const SizedBox(height: 8),
-          Text('${activeWidth.round()}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Text('${activeWidth.round()}',
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       );
     } else {
@@ -379,7 +419,9 @@ class _Toolbar extends ConsumerWidget {
           const SizedBox(width: 12),
           Expanded(child: slider),
           const SizedBox(width: 8),
-          Text('${activeWidth.round()}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Text('${activeWidth.round()}',
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       );
     }
@@ -413,8 +455,12 @@ class _ToolButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: isSelected ? Colors.blue : Colors.white70, size: 20),
-            Text(label, style: TextStyle(color: isSelected ? Colors.blue : Colors.white70, fontSize: 10)),
+            Icon(icon,
+                color: isSelected ? Colors.blue : Colors.white70, size: 20),
+            Text(label,
+                style: TextStyle(
+                    color: isSelected ? Colors.blue : Colors.white70,
+                    fontSize: 10)),
           ],
         ),
       ),
@@ -443,7 +489,7 @@ class GridPainter extends CustomPainter {
 
     final double unitSizeX = size.width / 1333.0;
     final double unitSizeY = size.height / 1000.0;
-    
+
     for (double i = 0; i <= 1333; i += 100) {
       final x = i * unitSizeX;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);

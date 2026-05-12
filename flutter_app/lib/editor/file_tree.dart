@@ -26,7 +26,9 @@ class _FileTreeState extends ConsumerState<FileTree> {
       width: 260,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 0.5)),
+        border: Border(
+            right:
+                BorderSide(color: Theme.of(context).dividerColor, width: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,16 +85,22 @@ class _FileTreeState extends ConsumerState<FileTree> {
   }
 
   void _createNewFile(String parentPath) async {
-    final name = await _showRenameDialog(context, title: 'New File', initialValue: 'untitled.typ');
+    final name = await _showRenameDialog(context,
+        title: 'New File', initialValue: 'untitled.typ');
     if (name != null && name.isNotEmpty) {
-      await ref.read(workspaceManagerProvider).createFile(name, parentPath: parentPath);
+      await ref
+          .read(workspaceManagerProvider)
+          .createFile(name, parentPath: parentPath);
     }
   }
 
   void _createNewFolder(String parentPath) async {
-    final name = await _showRenameDialog(context, title: 'New Folder', initialValue: 'new_folder');
+    final name = await _showRenameDialog(context,
+        title: 'New Folder', initialValue: 'new_folder');
     if (name != null && name.isNotEmpty) {
-      await ref.read(workspaceManagerProvider).createFolder(name, parentPath: parentPath);
+      await ref
+          .read(workspaceManagerProvider)
+          .createFolder(name, parentPath: parentPath);
     }
   }
 
@@ -101,7 +109,7 @@ class _FileTreeState extends ConsumerState<FileTree> {
     if (workspaceDir == null) return;
 
     final List<Directory> allDirs = _getAllDirectories(workspaceDir);
-    
+
     final targetParent = await showDialog<Directory>(
       context: context,
       builder: (context) => AlertDialog(
@@ -116,7 +124,8 @@ class _FileTreeState extends ConsumerState<FileTree> {
               final relPath = p.relative(dir.path, from: workspaceDir.path);
               return ListTile(
                 leading: const Icon(Icons.folder_outlined, size: 18),
-                title: Text(relPath == '.' ? '/' : relPath, style: const TextStyle(fontSize: 13)),
+                title: Text(relPath == '.' ? '/' : relPath,
+                    style: const TextStyle(fontSize: 13)),
                 onTap: () => Navigator.pop(context, dir),
               );
             },
@@ -126,7 +135,9 @@ class _FileTreeState extends ConsumerState<FileTree> {
     );
 
     if (targetParent != null) {
-      await ref.read(workspaceManagerProvider).moveEntity(entity, targetParent.path);
+      await ref
+          .read(workspaceManagerProvider)
+          .moveEntity(entity, targetParent.path);
     }
   }
 
@@ -134,7 +145,9 @@ class _FileTreeState extends ConsumerState<FileTree> {
     final List<Directory> dirs = [root];
     try {
       final List<FileSystemEntity> entities = root.listSync(recursive: true);
-      dirs.addAll(entities.whereType<Directory>().where((d) => !p.basename(d.path).startsWith('.')));
+      dirs.addAll(entities
+          .whereType<Directory>()
+          .where((d) => !p.basename(d.path).startsWith('.')));
     } catch (_) {}
     return dirs;
   }
@@ -170,7 +183,7 @@ class _FileTreeState extends ConsumerState<FileTree> {
             } else {
               final file = entity as File;
               final extension = p.extension(file.path).toLowerCase();
-              
+
               // Always update selectedFileProvider for any file
               ref.read(selectedFileProvider.notifier).state = file;
 
@@ -179,7 +192,7 @@ class _FileTreeState extends ConsumerState<FileTree> {
                 ref.read(workspaceManagerProvider).saveLastFile(file.path);
                 widget.onFileSelected?.call(file.path);
               } else if (extension == '.svg') {
-                // If it's an SVG, we just select it. 
+                // If it's an SVG, we just select it.
                 // The main page will decide whether to show a viewer or a drawing pad.
                 // For now, let's keep the existing drawing pad behavior if it's already used that way,
                 // but we also allow viewing it in the preview area.
@@ -187,13 +200,17 @@ class _FileTreeState extends ConsumerState<FileTree> {
                 // Similarly for JSON
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Unsupported file type: ${p.basename(file.path)}')),
+                  SnackBar(
+                      content: Text(
+                          'Unsupported file type: ${p.basename(file.path)}')),
                 );
               }
             }
           },
           onRename: (newName) async {
-            await ref.read(workspaceManagerProvider).renameEntity(entity, newName);
+            await ref
+                .read(workspaceManagerProvider)
+                .renameEntity(entity, newName);
           },
           onDelete: () async {
             final confirm = await _showConfirmDelete(context, name);
@@ -221,9 +238,11 @@ class _FileTreeState extends ConsumerState<FileTree> {
         title: const Text('Delete'),
         content: Text('Are you sure you want to delete $name?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true), 
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
@@ -270,7 +289,8 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
   @override
   void initState() {
     super.initState();
-    _renameController = TextEditingController(text: p.basenameWithoutExtension(widget.entity.path));
+    _renameController = TextEditingController(
+        text: p.basenameWithoutExtension(widget.entity.path));
   }
 
   @override
@@ -291,7 +311,8 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
   void _submitRename() {
     if (_isEditing) {
       final newName = _renameController.text.trim();
-      if (newName.isNotEmpty && newName != p.basenameWithoutExtension(widget.entity.path)) {
+      if (newName.isNotEmpty &&
+          newName != p.basenameWithoutExtension(widget.entity.path)) {
         widget.onRename(newName);
       }
       setState(() => _isEditing = false);
@@ -303,24 +324,30 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
     final isDir = widget.entity is Directory;
     final name = p.basename(widget.entity.path);
     final extension = isDir ? '' : p.extension(widget.entity.path);
-    final isActive = !isDir && ref.watch(selectedFileProvider)?.path == widget.entity.path;
+    final isActive =
+        !isDir && ref.watch(selectedFileProvider)?.path == widget.entity.path;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onSecondaryTapDown: (details) => _showContextMenu(context, details.globalPosition),
+        onSecondaryTapDown: (details) =>
+            _showContextMenu(context, details.globalPosition),
         child: InkWell(
           onTap: _isEditing ? null : widget.onTap,
           child: Container(
             height: 28,
-            padding: EdgeInsets.only(left: 12.0 + (widget.level * 12.0), right: 8),
-            color: isActive 
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.1) 
-                : (_isHovered ? Theme.of(context).hoverColor : Colors.transparent),
+            padding:
+                EdgeInsets.only(left: 12.0 + (widget.level * 12.0), right: 8),
+            color: isActive
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                : (_isHovered
+                    ? Theme.of(context).hoverColor
+                    : Colors.transparent),
             child: Row(
               children: [
-                _buildLeadingIcon(isDir, widget.isExpanded, extension, isActive),
+                _buildLeadingIcon(
+                    isDir, widget.isExpanded, extension, isActive),
                 const SizedBox(width: 6),
                 Expanded(
                   child: _isEditing
@@ -342,10 +369,14 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                            color: isActive 
-                                ? Theme.of(context).colorScheme.primary 
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                            fontWeight:
+                                isActive ? FontWeight.w600 : FontWeight.normal,
+                            color: isActive
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.8),
                           ),
                         ),
                 ),
@@ -354,11 +385,19 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (isDir && widget.onCreateFile != null)
-                         _ActionIcon(icon: Icons.note_add_outlined, onPressed: widget.onCreateFile!),
+                        _ActionIcon(
+                            icon: Icons.note_add_outlined,
+                            onPressed: widget.onCreateFile!),
                       if (isDir && widget.onCreateFolder != null)
-                         _ActionIcon(icon: Icons.create_new_folder_outlined, onPressed: widget.onCreateFolder!),
-                      _ActionIcon(icon: Icons.drive_file_move_outlined, onPressed: widget.onMove),
-                      _ActionIcon(icon: Icons.delete_outline, onPressed: widget.onDelete),
+                        _ActionIcon(
+                            icon: Icons.create_new_folder_outlined,
+                            onPressed: widget.onCreateFolder!),
+                      _ActionIcon(
+                          icon: Icons.drive_file_move_outlined,
+                          onPressed: widget.onMove),
+                      _ActionIcon(
+                          icon: Icons.delete_outline,
+                          onPressed: widget.onDelete),
                     ],
                   ),
               ],
@@ -369,7 +408,8 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
     );
   }
 
-  Widget _buildLeadingIcon(bool isDir, bool isExpanded, String extension, bool isActive) {
+  Widget _buildLeadingIcon(
+      bool isDir, bool isExpanded, String extension, bool isActive) {
     if (isDir) {
       return Icon(
         isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
@@ -398,13 +438,21 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
     if (widget.onCreateFile != null) {
       items.add(
         PopupMenuItem(
-          child: const Row(children: [Icon(Icons.note_add, size: 18), SizedBox(width: 8), Text('New File')]),
+          child: const Row(children: [
+            Icon(Icons.note_add, size: 18),
+            SizedBox(width: 8),
+            Text('New File')
+          ]),
           onTap: () => Future.microtask(widget.onCreateFile!),
         ),
       );
       items.add(
         PopupMenuItem(
-          child: const Row(children: [Icon(Icons.create_new_folder, size: 18), SizedBox(width: 8), Text('New Folder')]),
+          child: const Row(children: [
+            Icon(Icons.create_new_folder, size: 18),
+            SizedBox(width: 8),
+            Text('New Folder')
+          ]),
           onTap: () => Future.microtask(widget.onCreateFolder!),
         ),
       );
@@ -413,22 +461,35 @@ class _FileTreeItemState extends ConsumerState<FileTreeItem> {
 
     items.addAll([
       PopupMenuItem(
-        child: const Row(children: [Icon(Icons.edit, size: 18), SizedBox(width: 8), Text('Rename')]),
+        child: const Row(children: [
+          Icon(Icons.edit, size: 18),
+          SizedBox(width: 8),
+          Text('Rename')
+        ]),
         onTap: () => Future.microtask(_startEditing),
       ),
       PopupMenuItem(
-        child: const Row(children: [Icon(Icons.drive_file_move, size: 18), SizedBox(width: 8), Text('Move to...')]),
+        child: const Row(children: [
+          Icon(Icons.drive_file_move, size: 18),
+          SizedBox(width: 8),
+          Text('Move to...')
+        ]),
         onTap: () => Future.microtask(widget.onMove),
       ),
       PopupMenuItem(
-        child: const Row(children: [Icon(Icons.delete, size: 18, color: Colors.red), SizedBox(width: 8), Text('Delete', style: TextStyle(color: Colors.red))]),
+        child: const Row(children: [
+          Icon(Icons.delete, size: 18, color: Colors.red),
+          SizedBox(width: 8),
+          Text('Delete', style: TextStyle(color: Colors.red))
+        ]),
         onTap: () => Future.microtask(widget.onDelete),
       ),
     ]);
 
     showMenu(
       context: context,
-      position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx, position.dy),
+      position: RelativeRect.fromLTRB(
+          position.dx, position.dy, position.dx, position.dy),
       items: items,
     );
   }
@@ -438,7 +499,8 @@ class _HeaderAction extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
-  const _HeaderAction({required this.icon, required this.tooltip, required this.onPressed});
+  const _HeaderAction(
+      {required this.icon, required this.tooltip, required this.onPressed});
   @override
   Widget build(BuildContext context) {
     return IconButton(
@@ -469,7 +531,8 @@ class _ActionIcon extends StatelessWidget {
   }
 }
 
-Future<String?> _showRenameDialog(BuildContext context, {required String title, required String initialValue}) async {
+Future<String?> _showRenameDialog(BuildContext context,
+    {required String title, required String initialValue}) async {
   final controller = TextEditingController(text: initialValue);
   return showDialog<String>(
     context: context,
@@ -482,8 +545,12 @@ Future<String?> _showRenameDialog(BuildContext context, {required String title, 
         onSubmitted: (val) => Navigator.pop(context, val),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('OK')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('OK')),
       ],
     ),
   );

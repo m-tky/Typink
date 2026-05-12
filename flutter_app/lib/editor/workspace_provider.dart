@@ -29,10 +29,10 @@ class WorkspaceNotifier {
 
   Future<void> openWorkspace(Directory dir) async {
     if (!await dir.exists()) await dir.create(recursive: true);
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, dir.path);
-    
+
     ref.read(workspacePathProvider.notifier).state = dir;
     await ref.read(persistenceProvider).loadNotebook(dir);
   }
@@ -86,32 +86,35 @@ class WorkspaceNotifier {
       try {
         final file = File(newPath);
         String content = await file.readAsString();
-        
+
         // Replace "figures/oldName/" with "figures/newName/"
         // and also handle "oldName/" if used directly
         final figuresPattern = RegExp('figures/$oldName/');
-        final directPattern = RegExp('"$oldName/'); // Look for "oldName/ to avoid accidental matches
+        final directPattern = RegExp(
+            '"$oldName/'); // Look for "oldName/ to avoid accidental matches
 
-        String newContent = content.replaceAll(figuresPattern, 'figures/$newName/');
+        String newContent =
+            content.replaceAll(figuresPattern, 'figures/$newName/');
         newContent = newContent.replaceAll(directPattern, '"$newName/');
 
         if (newContent != content) {
           await file.writeAsString(newContent);
           // If this is the active file, we might need to notify providers
           if (activeFile?.path == entity.path) {
-             ref.read(rawContentProvider.notifier).state = newContent;
-             ref.read(debouncedContentProvider.notifier).state = newContent;
+            ref.read(rawContentProvider.notifier).state = newContent;
+            ref.read(debouncedContentProvider.notifier).state = newContent;
           }
         }
       } catch (e) {
         debugPrint('Failed to update internal paths: $e');
       }
     }
-    
+
     // Refresh the workspace state
     final currentDir = ref.read(workspacePathProvider);
     if (currentDir != null) {
-      ref.read(workspacePathProvider.notifier).state = Directory(currentDir.path);
+      ref.read(workspacePathProvider.notifier).state =
+          Directory(currentDir.path);
     }
   }
 
@@ -145,7 +148,8 @@ class WorkspaceNotifier {
     // Refresh
     final currentDir = ref.read(workspacePathProvider);
     if (currentDir != null) {
-      ref.read(workspacePathProvider.notifier).state = Directory(currentDir.path);
+      ref.read(workspacePathProvider.notifier).state =
+          Directory(currentDir.path);
     }
   }
 
@@ -156,17 +160,17 @@ class WorkspaceNotifier {
     final targetDir = parentPath ?? root.path;
     final fileName = name.endsWith('.typ') ? name : '$name.typ';
     final file = File(p.join(targetDir, fileName));
-    
+
     if (!await file.exists()) {
       await file.writeAsString('= $name\n\n');
-      
+
       // 自動的にSVG用フォルダも同じ階層に作成する（オプション的に扱うことも可能ですが、利便性のため作成）
       final folderName = p.basenameWithoutExtension(fileName);
       final svgFolder = Directory(p.join(targetDir, folderName));
       if (!await svgFolder.exists()) {
         await svgFolder.create(recursive: true);
       }
-      
+
       _refresh();
     }
   }
@@ -183,7 +187,8 @@ class WorkspaceNotifier {
     }
   }
 
-  Future<void> moveEntity(FileSystemEntity entity, String targetParentPath) async {
+  Future<void> moveEntity(
+      FileSystemEntity entity, String targetParentPath) async {
     final oldName = p.basename(entity.path);
     final oldNameNoExt = p.basenameWithoutExtension(entity.path);
     final newPath = p.join(targetParentPath, oldName);
@@ -203,9 +208,11 @@ class WorkspaceNotifier {
     }
 
     // 3. .typ ファイルの場合、関連するフォルダも移動
-    if (entity is File && (p.extension(entity.path) == '.typ' || p.extension(entity.path) == '.typst')) {
+    if (entity is File &&
+        (p.extension(entity.path) == '.typ' ||
+            p.extension(entity.path) == '.typst')) {
       final oldParent = entity.parent.path;
-      
+
       // 同一階層のフォルダ (e.g. old/path/name/)
       final localFolder = Directory(p.join(oldParent, oldNameNoExt));
       if (await localFolder.exists()) {
@@ -213,10 +220,12 @@ class WorkspaceNotifier {
       }
 
       // figures/ 以下のフォルダ (e.g. old/path/figures/name/)
-      final figuresFolder = Directory(p.join(oldParent, 'figures', oldNameNoExt));
+      final figuresFolder =
+          Directory(p.join(oldParent, 'figures', oldNameNoExt));
       if (await figuresFolder.exists()) {
         final newFiguresParent = Directory(p.join(targetParentPath, 'figures'));
-        if (!await newFiguresParent.exists()) await newFiguresParent.create(recursive: true);
+        if (!await newFiguresParent.exists())
+          await newFiguresParent.create(recursive: true);
         await figuresFolder.rename(p.join(newFiguresParent.path, oldNameNoExt));
       }
     }
@@ -227,7 +236,8 @@ class WorkspaceNotifier {
   void _refresh() {
     final currentDir = ref.read(workspacePathProvider);
     if (currentDir != null) {
-      ref.read(workspacePathProvider.notifier).state = Directory(currentDir.path);
+      ref.read(workspacePathProvider.notifier).state =
+          Directory(currentDir.path);
     }
   }
 }

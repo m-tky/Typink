@@ -4,7 +4,7 @@ mixin EditorCompletionHandler on EditorStateBase {
   @override
   void _triggerCompletion() {
     if (_view == null || _view!.mode != VimMode.insert) return;
-    
+
     final content = bridge.getEditorContent();
     final cursorU16 = _view!.cursorGlobalU16.toInt();
 
@@ -18,14 +18,18 @@ mixin EditorCompletionHandler on EditorStateBase {
 
         // 2. Fetch and merge Snippets
         final snippets = await ref.read(snippetsProvider.future);
-        final prefix = _getCurrentWordPrefix(content: content, cursor: cursorU16);
-        
-        final snippetCompletions = snippets.where((s) => s.prefix.contains(prefix)).map((s) => bridge.TypstCompletion(
-          label: s.prefix,
-          apply: s.body,
-          detail: s.description,
-          kind: 'snippet',
-        )).toList();
+        final prefix =
+            _getCurrentWordPrefix(content: content, cursor: cursorU16);
+
+        final snippetCompletions = snippets
+            .where((s) => s.prefix.contains(prefix))
+            .map((s) => bridge.TypstCompletion(
+                  label: s.prefix,
+                  apply: s.body,
+                  detail: s.description,
+                  kind: 'snippet',
+                ))
+            .toList();
 
         if (mounted) {
           setState(() {
@@ -44,38 +48,40 @@ mixin EditorCompletionHandler on EditorStateBase {
 
     final fullText = bridge.getEditorContent();
     final cursor = _view!.cursorGlobalU16.toInt();
-    
+
     int start = cursor;
     while (start > 0 && !RegExp(r'[\s()]').hasMatch(fullText[start - 1])) {
       start--;
       // If we hit a trigger-char at the start, stop there.
       // We stop at # (typst command), . (field), @ (cite/snippet), or $ (math)
       if (RegExp(r'[#.@$]$').hasMatch(fullText.substring(start, start + 1))) {
-         break;
+        break;
       }
     }
 
     final rawSnippet = completion.apply ?? completion.label;
-    final regex = RegExp(r'\$\{(?:(?<index>\d+):)?(?<label>[^}]*)\}|\$(?<singleIndex>\d+)');
+    final regex = RegExp(
+        r'\$\{(?:(?<index>\d+):)?(?<label>[^}]*)\}|\$(?<singleIndex>\d+)');
     final matches = regex.allMatches(rawSnippet).toList();
-    
+
     final List<SnippetPlaceholder> placeholders = [];
     String cleanText = "";
     int lastMatchEnd = 0;
-    
+
     for (final match in matches) {
       cleanText += rawSnippet.substring(lastMatchEnd, match.start);
       final label = match.namedGroup('label') ?? "";
-      final indexStr = (match.namedGroup('index') ?? match.namedGroup('singleIndex')) ?? "0";
+      final indexStr =
+          (match.namedGroup('index') ?? match.namedGroup('singleIndex')) ?? "0";
       final index = int.tryParse(indexStr) ?? 0;
-      
+
       placeholders.add(SnippetPlaceholder(
         index: index,
         offset: cleanText.length,
         length: label.length,
         label: label,
       ));
-      
+
       cleanText += label;
       lastMatchEnd = match.end;
     }
@@ -92,9 +98,9 @@ mixin EditorCompletionHandler on EditorStateBase {
         startU16: BigInt.from(start),
         endU16: BigInt.from(cursor),
         text: cleanText,
-        cursorU16: BigInt.from(start + cleanText.length), 
+        cursorU16: BigInt.from(start + cleanText.length),
       );
-      
+
       setState(() {
         _completions = [];
         _completionIndex = -1;
@@ -116,11 +122,11 @@ mixin EditorCompletionHandler on EditorStateBase {
 
   void _jumpToSnippetPlaceholder(int pIndex, int baseOffset) {
     if (pIndex < 0 || pIndex >= _snippetPlaceholders.length) return;
-    
+
     final p = _snippetPlaceholders[pIndex];
     final globalStart = baseOffset + p.offset;
     final globalEnd = globalStart + p.length;
-    
+
     try {
       bridge.handleEditorUpdateSelection(cursorU16: BigInt.from(globalEnd));
       widget.focusNode.requestFocus();
@@ -147,9 +153,15 @@ mixin EditorCompletionHandler on EditorStateBase {
     final scored = <MapEntry<bridge.TypstCompletion, int>>[];
     for (final c in _completions) {
       final label = c.label.toLowerCase();
-      bool isPrefixTrigger = prefix.startsWith('#') || prefix.startsWith('.') || prefix.startsWith('@');
+      bool isPrefixTrigger = prefix.startsWith('#') ||
+          prefix.startsWith('.') ||
+          prefix.startsWith('@');
       String subPrefix = isPrefixTrigger ? prefix.substring(1) : prefix;
-      String subLabel = label.startsWith('#') || label.startsWith('.') || label.startsWith('@') ? label.substring(1) : label;
+      String subLabel = label.startsWith('#') ||
+              label.startsWith('.') ||
+              label.startsWith('@')
+          ? label.substring(1)
+          : label;
 
       int score = -1;
       if (label == prefix || subLabel == subPrefix) {
@@ -215,7 +227,7 @@ mixin EditorCompletionHandler on EditorStateBase {
       detail: match.description,
       kind: 'snippet',
     );
-    
+
     _applyCompletion(completion);
   }
 }

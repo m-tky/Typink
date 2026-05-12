@@ -45,8 +45,10 @@ class _ColorWheelPickerState extends State<ColorWheelPicker> {
               children: [
                 // Hue Ring
                 GestureDetector(
-                  onPanUpdate: (details) => _handleHuePan(details.localPosition, size),
-                  onPanDown: (details) => _handleHuePan(details.localPosition, size),
+                  onPanUpdate: (details) =>
+                      _handleHuePan(details.localPosition, size),
+                  onPanDown: (details) =>
+                      _handleHuePan(details.localPosition, size),
                   child: CustomPaint(
                     size: Size(size, size),
                     painter: HueRingPainter(hue: hsvColor.hue),
@@ -57,8 +59,10 @@ class _ColorWheelPickerState extends State<ColorWheelPicker> {
                   width: size * 0.6,
                   height: size * 0.6,
                   child: GestureDetector(
-                    onPanUpdate: (details) => _handleSVPan(details.localPosition, size * 0.6),
-                    onPanDown: (details) => _handleSVPan(details.localPosition, size * 0.6),
+                    onPanUpdate: (details) =>
+                        _handleSVPan(details.localPosition, size * 0.6),
+                    onPanDown: (details) =>
+                        _handleSVPan(details.localPosition, size * 0.6),
                     child: CustomPaint(
                       painter: SVSquarePainter(
                         hue: hsvColor.hue,
@@ -91,7 +95,8 @@ class _ColorWheelPickerState extends State<ColorWheelPicker> {
             const SizedBox(width: 16),
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
@@ -139,9 +144,13 @@ class HueRingPainter extends CustomPainter {
     final thickness = size.width * 0.1;
 
     // Draw Rainbow Ring
-    final rect = Rect.fromCircle(center: center, radius: radius - thickness / 2);
+    final rect =
+        Rect.fromCircle(center: center, radius: radius - thickness / 2);
     final gradient = SweepGradient(
-      colors: List.generate(360, (index) => HSVColor.fromAHSV(1.0, index.toDouble(), 1.0, 1.0).toColor()),
+      colors: List.generate(
+          360,
+          (index) =>
+              HSVColor.fromAHSV(1.0, index.toDouble(), 1.0, 1.0).toColor()),
     );
     final paint = Paint()
       ..shader = gradient.createShader(rect)
@@ -162,7 +171,7 @@ class HueRingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
     canvas.drawCircle(pointerCenter, thickness / 2 + 2, pointerPaint);
-    
+
     final innerPointerPaint = Paint()
       ..color = Colors.black.withOpacity(0.3)
       ..style = PaintingStyle.stroke
@@ -233,7 +242,8 @@ Future<Color?> showColorWheelPicker(BuildContext context, Color initialColor) {
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: const Text('Pick a Color', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Pick a Color',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: 300,
           child: ColorWheelPicker(

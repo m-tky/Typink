@@ -29,8 +29,9 @@ class SettingsPanel extends ConsumerWidget {
             decoration: const InputDecoration(labelText: 'Theme'),
             items: AppThemeMode.values.map((mode) {
               return DropdownMenuItem(
-                value: mode, 
-                child: Text(mode.name[0].toUpperCase() + mode.name.substring(1)),
+                value: mode,
+                child:
+                    Text(mode.name[0].toUpperCase() + mode.name.substring(1)),
               );
             }).toList(),
             onChanged: (val) {
@@ -96,7 +97,8 @@ class SettingsPanel extends ConsumerWidget {
                     }
                   },
                   onDoubleTap: () {
-                    final newList = settings.palette.where((c) => c != color).toList();
+                    final newList =
+                        settings.palette.where((c) => c != color).toList();
                     notifier.setPalette(newList);
                   },
                   child: Container(
@@ -113,7 +115,8 @@ class SettingsPanel extends ConsumerWidget {
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
                 onPressed: () async {
-                  final color = await showColorWheelPicker(context, Colors.blue);
+                  final color =
+                      await showColorWheelPicker(context, Colors.blue);
                   if (color != null) {
                     notifier.setPalette([...settings.palette, color]);
                   }
@@ -127,13 +130,14 @@ class SettingsPanel extends ConsumerWidget {
               children: [
                 const Expanded(
                   child: Text(
-                    'Long press: change, Double tap: remove', 
+                    'Long press: change, Double tap: remove',
                     style: TextStyle(fontSize: 10, color: Colors.grey),
                   ),
                 ),
                 TextButton(
                   onPressed: () => notifier.resetPalette(),
-                  child: const Text('Reset Defaults', style: TextStyle(fontSize: 12)),
+                  child: const Text('Reset Defaults',
+                      style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -142,7 +146,8 @@ class SettingsPanel extends ConsumerWidget {
           _SectionTitle(title: 'Fonts'),
           DropdownButtonFormField<String>(
             value: settings.activeFont,
-            decoration: const InputDecoration(labelText: 'Preview Font (Typst)'),
+            decoration:
+                const InputDecoration(labelText: 'Preview Font (Typst)'),
             items: [
               'IBM Plex Sans',
               'Moralerspace Argon',
@@ -150,7 +155,8 @@ class SettingsPanel extends ConsumerWidget {
               'Harano Aji Gothic',
               'Harano Aji Mincho',
               settings.activeFont,
-              ...settings.customFontPaths.map((path) => p.basenameWithoutExtension(path)),
+              ...settings.customFontPaths
+                  .map((path) => p.basenameWithoutExtension(path)),
             ].toSet().map((font) {
               return DropdownMenuItem(value: font, child: Text(font));
             }).toList(),
@@ -169,7 +175,8 @@ class SettingsPanel extends ConsumerWidget {
               'JetBrains Mono',
               'Inter',
               settings.editorFont,
-              ...settings.customFontPaths.map((path) => p.basenameWithoutExtension(path)),
+              ...settings.customFontPaths
+                  .map((path) => p.basenameWithoutExtension(path)),
             ].toSet().map((font) {
               return DropdownMenuItem(value: font, child: Text(font));
             }).toList(),
@@ -179,7 +186,8 @@ class SettingsPanel extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           ListTile(
-            title: const Text('Editor Font Size', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('Editor Font Size',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Row(
               children: [
                 Expanded(
@@ -196,16 +204,18 @@ class SettingsPanel extends ConsumerWidget {
               ],
             ),
           ),
-          const Text('Custom Font Paths (Notebook):', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Custom Font Paths (Notebook):',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           ...settings.customFontPaths.map((path) => ListTile(
-            dense: true,
-            title: Text(p.basename(path), style: const TextStyle(fontSize: 12)),
-            subtitle: Text(path, style: const TextStyle(fontSize: 10)),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, size: 16),
-              onPressed: () => notifier.removeFontPath(path),
-            ),
-          )),
+                dense: true,
+                title: Text(p.basename(path),
+                    style: const TextStyle(fontSize: 12)),
+                subtitle: Text(path, style: const TextStyle(fontSize: 10)),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, size: 16),
+                  onPressed: () => notifier.removeFontPath(path),
+                ),
+              )),
           TextButton.icon(
             onPressed: () => _addFontPath(context, ref, notifier),
             icon: const Icon(Icons.add),
@@ -214,14 +224,17 @@ class SettingsPanel extends ConsumerWidget {
           const SizedBox(height: 32),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Center(child: Text('Typink v1.0.0', style: TextStyle(color: Colors.grey[600], fontSize: 12))),
+            child: Center(
+                child: Text('Typink v1.0.0',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12))),
           ),
         ],
       ),
     );
   }
 
-  void _addFontPath(BuildContext context, WidgetRef ref, SettingsNotifier notifier) {
+  void _addFontPath(
+      BuildContext context, WidgetRef ref, SettingsNotifier notifier) {
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -235,11 +248,15 @@ class SettingsPanel extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               if (controller.text.isNotEmpty) {
-                final relPath = await ref.read(persistenceProvider).copyFontToNotebook(controller.text);
+                final relPath = await ref
+                    .read(persistenceProvider)
+                    .copyFontToNotebook(controller.text);
                 if (relPath != null) {
                   notifier.addFontPath(relPath);
                 }
@@ -262,7 +279,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
+      child: Text(title,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
     );
   }
 }

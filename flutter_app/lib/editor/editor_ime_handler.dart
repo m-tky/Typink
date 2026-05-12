@@ -6,27 +6,36 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
 
     if (_view!.mode == VimMode.insert) {
       if (_connection == null || !_connection!.attached) {
-        _connection = TextInput.attach(this, const TextInputConfiguration(
-          enableDeltaModel: false,
-          inputType: TextInputType.multiline,
-          inputAction: TextInputAction.newline,
-        ));
+        _connection = TextInput.attach(
+            this,
+            const TextInputConfiguration(
+              enableDeltaModel: false,
+              inputType: TextInputType.multiline,
+              inputAction: TextInputAction.newline,
+            ));
         _connection!.show();
       }
       final fullText = bridge.getEditorContent();
       _connection!.setEditingState(TextEditingValue(
         text: fullText,
-        selection: TextSelection.collapsed(offset: _view!.cursorGlobalU16.toInt()),
+        selection:
+            TextSelection.collapsed(offset: _view!.cursorGlobalU16.toInt()),
         composing: _composing,
       ));
-      
+
       final cursorRect = _computeCaretRect();
       if (cursorRect != Rect.zero) {
         final dynamic connection = _connection;
         // Correct order: caret -> selection -> editable
-        try { connection.setCaretRect(cursorRect); } catch (_) {}
-        try { connection.setSelectionRects([cursorRect]); } catch (_) {}
-        try { connection.setEditableRects([cursorRect]); } catch (_) {}
+        try {
+          connection.setCaretRect(cursorRect);
+        } catch (_) {}
+        try {
+          connection.setSelectionRects([cursorRect]);
+        } catch (_) {}
+        try {
+          connection.setEditableRects([cursorRect]);
+        } catch (_) {}
       }
     } else {
       _closeInputConnectionIfNeeded();
@@ -41,7 +50,7 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
   @override
   void updateEditingValue(TextEditingValue value) {
     if (_view == null) return;
-    
+
     if (_view!.mode != VimMode.insert) {
       _updateConnectionState();
       return;
@@ -54,7 +63,9 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
 
     if (_ignoreNextImeUpdate) {
       final now = DateTime.now();
-      if (_lastModeChangeTime != null && now.difference(_lastModeChangeTime!) < const Duration(milliseconds: 150)) {
+      if (_lastModeChangeTime != null &&
+          now.difference(_lastModeChangeTime!) <
+              const Duration(milliseconds: 150)) {
         _ignoreNextImeUpdate = false;
         _updateConnectionState();
         return;
@@ -79,19 +90,24 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
     }
 
     int start = 0;
-    while (start < oldText.length && start < value.text.length && oldText[start] == value.text[start]) {
+    while (start < oldText.length &&
+        start < value.text.length &&
+        oldText[start] == value.text[start]) {
       start++;
     }
-    
+
     int oldEnd = oldText.length;
     int newEnd = value.text.length;
-    while (oldEnd > start && newEnd > start && oldText[oldEnd - 1] == value.text[newEnd - 1]) {
+    while (oldEnd > start &&
+        newEnd > start &&
+        oldText[oldEnd - 1] == value.text[newEnd - 1]) {
       oldEnd--;
       newEnd--;
     }
-    
+
     final insertedText = value.text.substring(start, newEnd);
-    debugPrint('IME Update: insertedText="$insertedText" at $start, oldEnd=$oldEnd');
+    debugPrint(
+        'IME Update: insertedText="$insertedText" at $start, oldEnd=$oldEnd');
 
     const pairs = {
       '(': ')',
@@ -103,8 +119,11 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
       '*': '*',
     };
 
-    if (insertedText.length == 1 && start < oldText.length && insertedText == oldText[start]) {
-      if (pairs.values.contains(insertedText) || (insertedText == r'$' || insertedText == '*')) {
+    if (insertedText.length == 1 &&
+        start < oldText.length &&
+        insertedText == oldText[start]) {
+      if (pairs.values.contains(insertedText) ||
+          (insertedText == r'$' || insertedText == '*')) {
         try {
           bridge.handleEditorUpdateSelection(cursorU16: BigInt.from(start + 1));
           _refreshView(syncIme: true);
@@ -119,7 +138,8 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
       final closing = pairs[insertedText]!;
       debugPrint('Auto-closing $insertedText with $closing');
       final afterCursor = (start < oldText.length) ? oldText[start] : "";
-      final shouldAutoClose = afterCursor.isEmpty || RegExp(r'[\s)\]}*$_]').hasMatch(afterCursor);
+      final shouldAutoClose =
+          afterCursor.isEmpty || RegExp(r'[\s)\]}*$_]').hasMatch(afterCursor);
 
       if (shouldAutoClose) {
         final pairText = insertedText + closing;
@@ -133,7 +153,7 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
           _refreshView(syncIme: false);
           _triggerHighlight();
           _updateConnectionState();
-          
+
           _notifyChanged();
           return;
         } catch (e) {
@@ -141,7 +161,7 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
         }
       }
     }
-    
+
     if (insertedText.isEmpty && oldText.length == value.text.length + 1) {
       final deletedChar = oldText[start];
       if (start < value.text.length) {
@@ -175,12 +195,12 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
         }
       }
     }
-    
+
     int? cursorU16;
     if (value.selection.isValid && value.selection.isCollapsed) {
       cursorU16 = value.selection.baseOffset;
     }
-    
+
     try {
       bridge.handleEditorReplaceRange(
         startU16: BigInt.from(start),
@@ -190,15 +210,21 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
       );
       _refreshView(syncIme: false);
       _triggerHighlight();
-      
+
       final cursorRect = _computeCaretRect();
       if (cursorRect != Rect.zero) {
         final dynamic connection = _connection;
-        try { connection.setCaretRect(cursorRect); } catch (_) {}
-        try { connection.setSelectionRects([cursorRect]); } catch (_) {}
-        try { connection.setEditableRects([cursorRect]); } catch (_) {}
+        try {
+          connection.setCaretRect(cursorRect);
+        } catch (_) {}
+        try {
+          connection.setSelectionRects([cursorRect]);
+        } catch (_) {}
+        try {
+          connection.setEditableRects([cursorRect]);
+        } catch (_) {}
       }
-      
+
       if (insertedText.isNotEmpty) {
         if (!tryAutoExpandSnippetSync()) {
           _triggerCompletion();
@@ -216,20 +242,37 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
     }
   }
 
-  @override void performAction(TextInputAction action) {}
-  @override void performSelector(String selectorName) {}
-  @override void updateFloatingCursor(RawFloatingCursorPoint point) {}
-  @override void showAutofillHints() {}
-  @override void insertTextPlaceholder(Size size) {}
-  @override void removeTextPlaceholder() {}
-  @override void showToolbar() {}
-  @override void hideToolbar() {}
-  @override AutofillScope? get autofillScope => null;
-  @override AutofillScope? get currentAutofillScope => null;
-  @override TextEditingValue? get currentTextEditingValue => null;
-  @override void didChangeInputControl(TextInputControl? oldControl, TextInputControl? newControl) {}
-  @override void insertContent(KeyboardInsertedContent content) {}
-  @override void connectionClosed() {}
-  @override void performPrivateCommand(String action, Map<String, dynamic> data) {}
-  @override void showAutocorrectionPromptRect(int start, int end) {}
+  @override
+  void performAction(TextInputAction action) {}
+  @override
+  void performSelector(String selectorName) {}
+  @override
+  void updateFloatingCursor(RawFloatingCursorPoint point) {}
+  @override
+  void showAutofillHints() {}
+  @override
+  void insertTextPlaceholder(Size size) {}
+  @override
+  void removeTextPlaceholder() {}
+  @override
+  void showToolbar() {}
+  @override
+  void hideToolbar() {}
+  @override
+  AutofillScope? get autofillScope => null;
+  @override
+  AutofillScope? get currentAutofillScope => null;
+  @override
+  TextEditingValue? get currentTextEditingValue => null;
+  @override
+  void didChangeInputControl(
+      TextInputControl? oldControl, TextInputControl? newControl) {}
+  @override
+  void insertContent(KeyboardInsertedContent content) {}
+  @override
+  void connectionClosed() {}
+  @override
+  void performPrivateCommand(String action, Map<String, dynamic> data) {}
+  @override
+  void showAutocorrectionPromptRect(int start, int end) {}
 }

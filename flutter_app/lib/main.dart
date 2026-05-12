@@ -50,7 +50,8 @@ class _MyAppState extends ConsumerState<MyApp> {
         themeMode: ThemeMode.dark,
         home: Scaffold(
           backgroundColor: Color(0xFF1E1E1E),
-          body: Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
+          body: Center(
+              child: CircularProgressIndicator(color: Colors.blueAccent)),
         ),
       );
     }
@@ -62,9 +63,9 @@ class _MyAppState extends ConsumerState<MyApp> {
       title: 'Typink',
       debugShowCheckedModeBanner: false,
       theme: theme.themeData,
-      home: workspace == null 
-        ? const WorkspaceSelectorPage() 
-        : const TypstEditorPage(),
+      home: workspace == null
+          ? const WorkspaceSelectorPage()
+          : const TypstEditorPage(),
       routes: {
         '/settings': (context) => const SettingsPanel(),
       },
