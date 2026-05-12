@@ -28,7 +28,8 @@ class TypstEditorPage extends ConsumerStatefulWidget {
   ConsumerState<TypstEditorPage> createState() => _TypstEditorPageState();
 }
 
-class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsBindingObserver {
+class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
+    with WidgetsBindingObserver {
   late final FocusNode _focusNode;
   final GlobalKey<HeadlessEditorViewState> _editorKey = GlobalKey();
   Timer? _compileDebounceTimer;
@@ -44,15 +45,16 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     _focusNode.addListener(() {
       if (mounted) setState(() {});
     });
-    
-    _pageController = PageController(initialPage: ref.read(currentPageProvider));
+
+    _pageController =
+        PageController(initialPage: ref.read(currentPageProvider));
     // Request focus after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNode.requestFocus();
     });
 
-    // 自動保存の再設定
-    Future.microtask(() => ref.read(persistenceProvider).setupAutoSave());
+    // Ensure the persistenceProvider is initialized (autosave is set up in the provider factory)
+    ref.read(persistenceProvider);
   }
 
   @override
@@ -66,7 +68,8 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       ref.read(persistenceProvider).flush();
     }
   }
@@ -76,11 +79,12 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     final currentFile = ref.read(currentTypFileProvider);
     if (currentFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select or create a .typ file first')),
+        const SnackBar(
+            content: Text('Please select or create a .typ file first')),
       );
       return;
     }
-    
+
     final fileNameNoExt = p.basenameWithoutExtension(currentFile.path);
     final targetDir = p.join(currentFile.parent.path, fileNameNoExt);
 
@@ -111,25 +115,32 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
       final persistence = ref.read(persistenceProvider);
 
       await persistence.saveFigure(
-        id, 
+        id,
         notifier.toSvg(id),
-        jsonEncode({id: (ref.read(handwritingProvider).figures[id] ?? []).map((s) => s.toJson()).toList()}),
+        jsonEncode({
+          id: (ref.read(handwritingProvider).figures[id] ?? [])
+              .map((s) => s.toJson())
+              .toList()
+        }),
         targetDir: targetDir,
       );
 
       if (existingId == null) {
         final relWidth = notifier.calculateRelativeWidth(id);
         String widthStr = '100%';
-        if (relWidth < 0.3) widthStr = '40%';
+        if (relWidth < 0.3)
+          widthStr = '40%';
         else if (relWidth < 0.7) widthStr = '70%';
 
         // 挿入するSnippet
         // insertAfterCurrentLine: true を使うので、Snippet側では余計な先頭改行を控える（1つの改行で十分）
-        final snippet = '\n#figure(\n  image("$fileNameNoExt/$id.svg", width: $widthStr),\n  caption: [$id],\n)\n';
+        final snippet =
+            '\n#figure(\n  image("$fileNameNoExt/$id.svg", width: $widthStr),\n  caption: [$id],\n)\n';
         debugPrint('Inserting figure snippet after current line: $snippet');
-        
+
         // エディタの現在の行の直後に挿入
-        _editorKey.currentState?.insertText(snippet, insertAfterCurrentLine: true);
+        _editorKey.currentState
+            ?.insertText(snippet, insertAfterCurrentLine: true);
       }
     }
   }
@@ -159,7 +170,7 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     final nextFigures = Map<String, List<Stroke>>.from(notifier.state.figures);
     nextFigures.remove(id);
     notifier.state = notifier.state.copyWith(figures: nextFigures);
-    
+
     // TODO: Bridge delete figure to Rust
     ref.read(activeFigureIdProvider.notifier).state = null;
   }
@@ -170,7 +181,7 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     final compileResultAsync = ref.watch(typstCompileResultProvider);
     final theme = ref.watch(activeThemeDetailedProvider);
     final settings = ref.watch(settingsProvider);
-    
+
     // Breaking the circular loop: The controller listener already handles updates.
     // We only need to sync FROM the provider when the document changes (dealt with in file tree).
 
@@ -178,13 +189,13 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        
+
         final vimMode = ref.read(vimModeProvider);
         if (vimMode != v.VimMode.normal) {
           // Send Escape to the editor to return to normal mode
           _editorKey.currentState?.sendEsc();
         } else {
-          // If already in normal mode, maybe we want to allow pop, 
+          // If already in normal mode, maybe we want to allow pop,
           // but typically on Android we might want to confirm or just ignore.
           // For now, let's just ignore to prevent accidental exit.
           debugPrint('Pop requested in Normal mode, ignored.');
@@ -192,100 +203,105 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
       },
       child: Scaffold(
         backgroundColor: theme.editorBackground,
-      appBar: AppBar(
-        backgroundColor: theme.themeData.colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(_isExplorerVisible ? Icons.menu_open : Icons.menu),
-          onPressed: () => setState(() => _isExplorerVisible = !_isExplorerVisible),
-          tooltip: 'Toggle Explorer',
-        ),
-        title: Text(
-          ref.watch(documentTitleProvider),
-          style: TextStyle(fontSize: 16, color: theme.editorTextColor),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.read(debouncedContentProvider.notifier).state = bridge.getEditorContent();
-            },
-            tooltip: 'Compile Now',
+        appBar: AppBar(
+          backgroundColor: theme.themeData.colorScheme.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(_isExplorerVisible ? Icons.menu_open : Icons.menu),
+            onPressed: () =>
+                setState(() => _isExplorerVisible = !_isExplorerVisible),
+            tooltip: 'Toggle Explorer',
           ),
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: () => _editorKey.currentState?.save(),
-            tooltip: 'Save',
+          title: Text(
+            ref.watch(documentTitleProvider),
+            style: TextStyle(fontSize: 16, color: theme.editorTextColor),
           ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: _exportPdf,
-            tooltip: 'Export PDF',
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_photo_alternate),
-            onPressed: () => _addOrEditDrawing(),
-            tooltip: 'Add Handwriting',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).pushNamed('/settings'),
-            tooltip: 'Settings',
-          ),
-          const VerticalDivider(width: 1, indent: 12, endIndent: 12),
-          _LayoutActionButton(
-            icon: Icons.edit_note,
-            mode: LayoutMode.editorOnly,
-            tooltip: 'Editor Only',
-          ),
-          _LayoutActionButton(
-            icon: Icons.article_outlined,
-            mode: LayoutMode.previewOnly,
-            tooltip: 'Preview Only',
-          ),
-          _LayoutActionButton(
-            icon: Icons.view_quilt_outlined,
-            mode: LayoutMode.split,
-            tooltip: 'Split View',
-          ),
-          if (ref.watch(layoutModeProvider) == LayoutMode.split)
-            _OrientationActionButton(),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): () => _turnPage(-1),
-          const SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): () => _turnPage(1),
-        },
-        child: Column(
-          children: [
-          Expanded(
-            child: Row(
-              children: [
-                if (_isExplorerVisible) FileTree(
-                  onFileSelected: (path) {
-                    ref.read(currentPageProvider.notifier).state = 0;
-                    if (_pageController.hasClients) {
-                      _pageController.jumpToPage(0);
-                    }
-                    _editorKey.currentState?.load(path);
-                  },
-                  onSvgSelected: (id) => _addOrEditDrawing(id),
-                ),
-                Expanded(
-                  child: _buildMainArea(theme, settings),
-                ),
-              ],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                ref.read(debouncedContentProvider.notifier).state =
+                    bridge.getEditorContent();
+              },
+              tooltip: 'Compile Now',
             ),
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: () => _editorKey.currentState?.save(),
+              tooltip: 'Save',
+            ),
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              onPressed: _exportPdf,
+              tooltip: 'Export PDF',
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_photo_alternate),
+              onPressed: () => _addOrEditDrawing(),
+              tooltip: 'Add Handwriting',
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => Navigator.of(context).pushNamed('/settings'),
+              tooltip: 'Settings',
+            ),
+            const VerticalDivider(width: 1, indent: 12, endIndent: 12),
+            _LayoutActionButton(
+              icon: Icons.edit_note,
+              mode: LayoutMode.editorOnly,
+              tooltip: 'Editor Only',
+            ),
+            _LayoutActionButton(
+              icon: Icons.article_outlined,
+              mode: LayoutMode.previewOnly,
+              tooltip: 'Preview Only',
+            ),
+            _LayoutActionButton(
+              icon: Icons.view_quilt_outlined,
+              mode: LayoutMode.split,
+              tooltip: 'Split View',
+            ),
+            if (ref.watch(layoutModeProvider) == LayoutMode.split)
+              _OrientationActionButton(),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true):
+                () => _turnPage(-1),
+            const SingleActivator(LogicalKeyboardKey.arrowRight, alt: true):
+                () => _turnPage(1),
+          },
+          child: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    if (_isExplorerVisible)
+                      FileTree(
+                        onFileSelected: (path) {
+                          ref.read(currentPageProvider.notifier).state = 0;
+                          if (_pageController.hasClients) {
+                            _pageController.jumpToPage(0);
+                          }
+                          _editorKey.currentState?.load(path);
+                        },
+                        onSvgSelected: (id) => _addOrEditDrawing(id),
+                      ),
+                    Expanded(
+                      child: _buildMainArea(theme, settings),
+                    ),
+                  ],
+                ),
+              ),
+              _buildStatusBar(theme),
+            ],
           ),
-          _buildStatusBar(theme),
-        ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _turnPage(int delta) {
     if (!_pageController.hasClients) return;
@@ -293,10 +309,10 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     compileResult.whenData((result) {
       final totalPages = result.pages.length;
       if (totalPages <= 1) return;
-      
+
       final currentPage = ref.read(currentPageProvider);
       final targetPage = (currentPage + delta).clamp(0, totalPages - 1);
-      
+
       if (targetPage != currentPage) {
         _pageController.animateToPage(
           targetPage,
@@ -312,7 +328,11 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     final settings = ref.watch(settingsProvider);
     final mode = ref.watch(vimModeProvider);
     final modeName = settings.vimEnabled ? mode.name.toUpperCase() : 'EDITOR';
-    final modeColor = !settings.vimEnabled ? Colors.grey : (mode == v.VimMode.insert ? Colors.green : (mode == v.VimMode.visual ? Colors.orange : Colors.blue));
+    final modeColor = !settings.vimEnabled
+        ? Colors.grey
+        : (mode == v.VimMode.insert
+            ? Colors.green
+            : (mode == v.VimMode.visual ? Colors.orange : Colors.blue));
 
     return Container(
       height: 24,
@@ -325,20 +345,25 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
             color: modeColor,
             child: Text(
               modeName,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 8),
           Text(
             'Typink Pro - Headless Core Active',
-            style: TextStyle(color: theme.editorTextColor.withOpacity(0.5), fontSize: 10),
+            style: TextStyle(
+                color: theme.editorTextColor.withOpacity(0.5), fontSize: 10),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPreview(bridge.TypstCompileResult result, {required bool isCompiling}) {
+  Widget _buildPreview(bridge.TypstCompileResult result,
+      {required bool isCompiling}) {
     final pages = result.pages;
     final diagnostics = result.diagnostics;
     final activeId = ref.watch(activeFigureIdProvider);
@@ -347,32 +372,32 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
 
     final children = <Widget>[];
     if (pages.isNotEmpty) {
-      children.add(
-        settings.horizontalPreview 
-        ? PageView.builder(
-            controller: _pageController,
-            itemCount: pages.length,
-            onPageChanged: (index) => ref.read(currentPageProvider.notifier).state = index,
-            itemBuilder: (context, index) {
-              final image = pages[index].image;
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: _buildPageItem(image, activeId),
-              );
-            },
-          )
-        : ListView.separated(
-            padding: const EdgeInsets.all(24),
-            itemCount: pages.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final image = pages[index].image;
-              return _buildPageItem(image, activeId);
-            },
-          )
-      );
+      children.add(settings.horizontalPreview
+          ? PageView.builder(
+              controller: _pageController,
+              itemCount: pages.length,
+              onPageChanged: (index) =>
+                  ref.read(currentPageProvider.notifier).state = index,
+              itemBuilder: (context, index) {
+                final image = pages[index].image;
+                return Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: _buildPageItem(image, activeId),
+                );
+              },
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(24),
+              itemCount: pages.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final image = pages[index].image;
+                return _buildPageItem(image, activeId);
+              },
+            ));
     } else if (diagnostics.isEmpty && !isCompiling) {
-      children.add(Center(child: Text('No Output', style: TextStyle(color: Colors.grey))));
+      children.add(Center(
+          child: Text('No Output', style: TextStyle(color: Colors.grey))));
     }
     children.add(
       Positioned(
@@ -393,16 +418,24 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
                   return ListView(
                     shrinkWrap: true,
                     children: [
-                      ListTile(title: Text('Select figure to edit', style: TextStyle(fontWeight: FontWeight.bold))),
+                      ListTile(
+                          title: Text('Select figure to edit',
+                              style: TextStyle(fontWeight: FontWeight.bold))),
                       ...state.figures.keys.map((id) {
-                        final isEditable = ref.read(handwritingProvider.notifier).isEditable(id);
+                        final isEditable = ref
+                            .read(handwritingProvider.notifier)
+                            .isEditable(id);
                         return ListTile(
-                          leading: Icon(isEditable ? Icons.brush : Icons.visibility, color: isEditable ? null : Colors.grey),
+                          leading: Icon(
+                              isEditable ? Icons.brush : Icons.visibility,
+                              color: isEditable ? null : Colors.grey),
                           title: Text(id + (isEditable ? '' : ' (Ready-Only)')),
-                          onTap: isEditable ? () {
-                            Navigator.pop(context);
-                            _addOrEditDrawing(id);
-                          } : null,
+                          onTap: isEditable
+                              ? () {
+                                  Navigator.pop(context);
+                                  _addOrEditDrawing(id);
+                                }
+                              : null,
                           trailing: IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
@@ -449,9 +482,17 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
                 final isError = diag.severity == 1;
                 return ListTile(
                   dense: true,
-                  title: Text(diag.message, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  subtitle: Text('Line: ${diag.line + 1}, Column: ${diag.column + 1}', style: TextStyle(color: Colors.white70)),
-                  leading: Icon(isError ? Icons.error_outline : Icons.warning_amber_outlined, color: Colors.white),
+                  title: Text(diag.message,
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: Text(
+                      'Line: ${diag.line + 1}, Column: ${diag.column + 1}',
+                      style: TextStyle(color: Colors.white70)),
+                  leading: Icon(
+                      isError
+                          ? Icons.error_outline
+                          : Icons.warning_amber_outlined,
+                      color: Colors.white),
                 );
               },
             ),
@@ -474,9 +515,17 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blueAccent)),
+                SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.blueAccent)),
                 SizedBox(width: 8),
-                Text('Compiling...', style: TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                Text('Compiling...',
+                    style: TextStyle(
+                        color: Colors.blueAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -494,7 +543,8 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
           if (activeId == null) {
             final state = ref.read(handwritingProvider);
             if (state.figures.isNotEmpty) {
-              ref.read(activeFigureIdProvider.notifier).state = state.figures.keys.last;
+              ref.read(activeFigureIdProvider.notifier).state =
+                  state.figures.keys.last;
             } else {
               ref.read(activeFigureIdProvider.notifier).state = 'fig_1';
             }
@@ -502,12 +552,14 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
         },
         child: Container(
           decoration: BoxDecoration(
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20)],
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20)
+            ],
           ),
           child: AspectRatio(
             aspectRatio: 210 / 297,
             child: Image.memory(
-              image, 
+              image,
               gaplessPlayback: true,
               fit: BoxFit.fill,
             ),
@@ -527,14 +579,14 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     // ...
     // To simplify for this demo, I'll use a fixed name or prompt.
     // But since file_picker is present, let's use it.
-    
+
     // final path = await FilePicker.platform.saveFile(...)
     // However, on some Linux setups, saveFile might not be fully supported.
     // Let's just use a default path in the workspace for now to ensure it works.
-    
+
     final workspace = ref.read(workspacePathProvider);
     if (workspace == null) return;
-    
+
     final pdfPath = p.join(workspace.path, 'output.pdf');
     await _editorKey.currentState?.exportPdf(pdfPath);
   }
@@ -542,10 +594,14 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
   Widget _buildMainArea(AppTheme theme, AppSettings settings) {
     final layoutMode = ref.watch(layoutModeProvider);
     final selectedFile = ref.watch(selectedFileProvider);
-    final isTypst = selectedFile != null && (p.extension(selectedFile.path).toLowerCase() == '.typ' || p.extension(selectedFile.path).toLowerCase() == '.typst');
+    final isTypst = selectedFile != null &&
+        (p.extension(selectedFile.path).toLowerCase() == '.typ' ||
+            p.extension(selectedFile.path).toLowerCase() == '.typst');
 
     if (layoutMode == LayoutMode.editorOnly) {
-      return isTypst ? _buildEditor(theme, settings) : _buildGenericPreview(theme);
+      return isTypst
+          ? _buildEditor(theme, settings)
+          : _buildGenericPreview(theme);
     } else if (layoutMode == LayoutMode.previewOnly) {
       return _buildGenericPreview(theme);
     } else if (layoutMode == LayoutMode.split) {
@@ -554,20 +610,23 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
     return const SizedBox.shrink();
   }
 
-  Widget _buildResizableSplit(AppTheme theme, AppSettings settings, bool isTypst) {
+  Widget _buildResizableSplit(
+      AppTheme theme, AppSettings settings, bool isTypst) {
     if (!isTypst) return _buildGenericPreview(theme);
 
     final orientation = ref.watch(splitOrientationProvider);
     final ratio = ref.watch(splitRatioProvider);
-    
+
     // Watch snippets to ensure they are pre-loaded for auto-expansion
     ref.watch(snippetsProvider);
 
     return LayoutBuilder(
       key: _mainAreaKey,
       builder: (context, constraints) {
-        final renderBox = _mainAreaKey.currentContext?.findRenderObject() as RenderBox?;
-        final mainAreaOffset = renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
+        final renderBox =
+            _mainAreaKey.currentContext?.findRenderObject() as RenderBox?;
+        final mainAreaOffset =
+            renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
 
         if (orientation == SplitMode.horizontal) {
           return Row(
@@ -580,14 +639,17 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
                 behavior: HitTestBehavior.translucent,
                 onPanUpdate: (details) {
                   final x = details.globalPosition.dx - mainAreaOffset.dx;
-                  ref.read(splitRatioProvider.notifier).state = (x / constraints.maxWidth).clamp(0.1, 0.9);
+                  ref.read(splitRatioProvider.notifier).state =
+                      (x / constraints.maxWidth).clamp(0.1, 0.9);
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.resizeLeftRight,
                   child: Container(
                     width: 8,
                     color: Colors.transparent,
-                    child: Center(child: Container(width: 1, color: theme.themeData.dividerColor)),
+                    child: Center(
+                        child: Container(
+                            width: 1, color: theme.themeData.dividerColor)),
                   ),
                 ),
               ),
@@ -607,14 +669,17 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
                 behavior: HitTestBehavior.translucent,
                 onPanUpdate: (details) {
                   final y = details.globalPosition.dy - mainAreaOffset.dy;
-                  ref.read(splitRatioProvider.notifier).state = (y / constraints.maxHeight).clamp(0.1, 0.9);
+                  ref.read(splitRatioProvider.notifier).state =
+                      (y / constraints.maxHeight).clamp(0.1, 0.9);
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.resizeUpDown,
                   child: Container(
                     height: 8,
                     color: Colors.transparent,
-                    child: Center(child: Container(height: 1, color: theme.themeData.dividerColor)),
+                    child: Center(
+                        child: Container(
+                            height: 1, color: theme.themeData.dividerColor)),
                   ),
                 ),
               ),
@@ -661,7 +726,8 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
               if (targetVersion == currentVersion) {
                 ref.read(debouncedContentProvider.notifier).state = content;
               } else {
-                debugPrint('[COMPILE] Stale debounce detected. Skipping update.');
+                debugPrint(
+                    '[COMPILE] Stale debounce detected. Skipping update.');
               }
             }
           });
@@ -672,7 +738,10 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
 
   Widget _buildGenericPreview(AppTheme theme) {
     final selectedFile = ref.watch(selectedFileProvider);
-    if (selectedFile == null) return const Center(child: Text('No file selected', style: TextStyle(color: Colors.grey)));
+    if (selectedFile == null)
+      return const Center(
+          child:
+              Text('No file selected', style: TextStyle(color: Colors.grey)));
 
     final extension = p.extension(selectedFile.path).toLowerCase();
     if (extension == '.typ' || extension == '.typst') {
@@ -727,7 +796,9 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
                   ),
                 );
               } catch (e) {
-                return Center(child: Text('Invalid JSON: $e', style: const TextStyle(color: Colors.red)));
+                return Center(
+                    child: Text('Invalid JSON: $e',
+                        style: const TextStyle(color: Colors.red)));
               }
             }
             return const Center(child: CircularProgressIndicator());
@@ -735,7 +806,10 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage> with WidgetsB
         ),
       );
     } else {
-      return Center(child: Text('No preview available for ${p.basename(selectedFile.path)}', style: const TextStyle(color: Colors.grey)));
+      return Center(
+          child: Text(
+              'No preview available for ${p.basename(selectedFile.path)}',
+              style: const TextStyle(color: Colors.grey)));
     }
   }
 }
@@ -772,11 +846,16 @@ class _OrientationActionButton extends ConsumerWidget {
     final isHorizontal = orientation == SplitMode.horizontal;
 
     return IconButton(
-      icon: Icon(isHorizontal ? Icons.view_agenda_outlined : Icons.view_sidebar_outlined),
+      icon: Icon(isHorizontal
+          ? Icons.view_agenda_outlined
+          : Icons.view_sidebar_outlined),
       onPressed: () {
-        ref.read(splitOrientationProvider.notifier).state = isHorizontal ? SplitMode.vertical : SplitMode.horizontal;
+        ref.read(splitOrientationProvider.notifier).state =
+            isHorizontal ? SplitMode.vertical : SplitMode.horizontal;
       },
-      tooltip: isHorizontal ? 'Switch to Vertical Split' : 'Switch to Horizontal Split',
+      tooltip: isHorizontal
+          ? 'Switch to Vertical Split'
+          : 'Switch to Horizontal Split',
       color: Colors.grey,
     );
   }
