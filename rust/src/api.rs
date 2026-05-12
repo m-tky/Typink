@@ -1,11 +1,14 @@
-use typst::World;
-use crate::typst_engine::{TypinkWorld, FontFileData};
-use crate::editor::{HeadlessEditor, EditorView};
+#![allow(unexpected_cfgs)]
+
+use crate::editor::{EditorView, HeadlessEditor};
+use crate::typst_engine::{FontFileData, TypinkWorld};
 use crate::vim_engine::VimAction;
 use once_cell::sync::Lazy;
 use std::sync::{Mutex, MutexGuard};
+use typst::World;
 
 static EDITOR: Lazy<Mutex<HeadlessEditor>> = Lazy::new(|| Mutex::new(HeadlessEditor::new()));
+static COMPILE_WORLD: Lazy<Mutex<Option<TypinkWorld>>> = Lazy::new(|| Mutex::new(None));
 
 fn lock_editor() -> MutexGuard<'static, HeadlessEditor> {
     match EDITOR.lock() {
@@ -17,6 +20,13 @@ fn lock_editor() -> MutexGuard<'static, HeadlessEditor> {
             eprintln!("RUST_WARNING: EDITOR lock poisoned! Attempting to recover...");
             guard
         }
+    }
+}
+
+fn lock_compile_world() -> MutexGuard<'static, Option<TypinkWorld>> {
+    match COMPILE_WORLD.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
     }
 }
 
@@ -53,89 +63,124 @@ pub struct ExtraFile {
 }
 
 pub fn compile_typst(content: String, extra_files: Vec<ExtraFile>) -> TypstCompileResult {
-    let mut extras = std::collections::HashMap::new();
-    for file in extra_files {
-        extras.insert(file.name, file.data);
-    }
-    
-    let fonts = {
-        let editor = lock_editor();
-        editor.preloaded_fonts.clone()
-    };
-    
-    let world = TypinkWorld::new(content, extras, fonts);
-    let output = typst::compile::<typst::layout::PagedDocument>(&world);
-    
-    match output.output {
-        Ok(paged_doc) => {
-            let mut pages = Vec::new();
-            for page in &paged_doc.pages {
-                let canvas = typst_render::render(
-                    page,
-                    2.0, // 2x scaling for clarity
-                );
-                
-                let image = canvas.encode_png().expect("PNG encoding failed");
-                pages.push(TypstPage { image });
-            }
-            TypstCompileResult {
-                pages,
-                diagnostics: Vec::new(),
-            }
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let mut extras = std::collections::HashMap::new();
+        for file in extra_files {
+            extras.insert(file.name, file.data);
         }
-        Err(diags) => {
-            let mut diagnostics = Vec::new();
-            let source = world.source(world.main()).unwrap();
-            
-            for diag in diags {
-                let range = source.range(diag.span).unwrap_or(0..0);
-                let text = source.text();
-                let line = text[..range.start].chars().filter(|&c| c == '\n').count();
-                let last_line_start = text[..range.start].rfind('\n').map(|i| i + 1).unwrap_or(0);
-                let column = text[last_line_start..range.start].chars().count();
-                
-                let severity = match diag.severity {
-                    typst::diag::Severity::Error => 1,
-                    typst::diag::Severity::Warning => 2,
-                };
 
-                diagnostics.push(TypstDiagnostic {
-                    message: diag.message.to_string(),
-                    line: line as u32,
-                    column: column as u32,
-                    severity,
-                });
+        // 1. Get fonts with a brief EDITOR lock, released immediately.
+        let fonts = {
+            let editor = lock_editor();
+            editor.preloaded_fonts.clone()
+        };
+
+        // 2. Lock the compile world and initialise or update it.
+        let mut cw = lock_compile_world();
+        if cw.is_none() {
+            *cw = Some(TypinkWorld::new(content.clone(), extras.clone(), fonts));
+        } else {
+            let world = cw.as_ref().unwrap();
+            world.set_main_content(content.clone());
+            world.update_files(extras.clone());
+        }
+
+        let output = typst::compile::<typst::layout::PagedDocument>(cw.as_ref().unwrap());
+
+        match output.output {
+            Ok(paged_doc) => {
+                let mut pages = Vec::new();
+                for page in &paged_doc.pages {
+                    let canvas = typst_render::render(
+                        page, 2.0, // 2x scaling for clarity
+                    );
+
+                    let image = canvas.encode_png().expect("PNG encoding failed");
+                    pages.push(TypstPage { image });
+                }
+                TypstCompileResult {
+                    pages,
+                    diagnostics: Vec::new(),
+                }
             }
-            
-            TypstCompileResult {
-                pages: Vec::new(),
-                diagnostics,
+            Err(diags) => {
+                let world = cw.as_ref().unwrap();
+                let source = world.source(world.main()).unwrap();
+                let mut diagnostics = Vec::new();
+
+                for diag in diags {
+                    let range = source.range(diag.span).unwrap_or(0..0);
+                    let text = source.text();
+                    let line = text[..range.start].chars().filter(|&c| c == '\n').count();
+                    let last_line_start =
+                        text[..range.start].rfind('\n').map(|i| i + 1).unwrap_or(0);
+                    let column = text[last_line_start..range.start].chars().count();
+
+                    let severity = match diag.severity {
+                        typst::diag::Severity::Error => 1,
+                        typst::diag::Severity::Warning => 2,
+                    };
+
+                    diagnostics.push(TypstDiagnostic {
+                        message: diag.message.to_string(),
+                        line: line as u32,
+                        column: column as u32,
+                        severity,
+                    });
+                }
+
+                TypstCompileResult {
+                    pages: Vec::new(),
+                    diagnostics,
+                }
             }
         }
+    }));
+
+    match result {
+        Ok(val) => val,
+        Err(_) => TypstCompileResult {
+            pages: vec![],
+            diagnostics: vec![],
+        },
     }
 }
 
 pub fn compile_pdf(content: String, extra_files: Vec<ExtraFile>) -> Option<Vec<u8>> {
-    let mut extras = std::collections::HashMap::new();
-    for file in extra_files {
-        extras.insert(file.name, file.data);
-    }
-    
-    let fonts = {
-        let editor = lock_editor();
-        editor.preloaded_fonts.clone()
-    };
-    
-    let world = TypinkWorld::new(content, extras, fonts);
-    let output = typst::compile::<typst::layout::PagedDocument>(&world);
-    
-    match output.output {
-        Ok(paged_doc) => {
-            let pdf = typst_pdf::pdf(&paged_doc, &typst_pdf::PdfOptions::default()).ok()?;
-            Some(pdf)
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let mut extras = std::collections::HashMap::new();
+        for file in extra_files {
+            extras.insert(file.name, file.data);
         }
-        Err(_) => None,
-    }
+
+        // 1. Get fonts with a brief EDITOR lock, released immediately.
+        let fonts = {
+            let editor = lock_editor();
+            editor.preloaded_fonts.clone()
+        };
+
+        // 2. Lock the compile world and initialise or update it.
+        let mut cw = lock_compile_world();
+        if cw.is_none() {
+            *cw = Some(TypinkWorld::new(content.clone(), extras.clone(), fonts));
+        } else {
+            let world = cw.as_ref().unwrap();
+            world.set_main_content(content.clone());
+            world.update_files(extras.clone());
+        }
+
+        let output = typst::compile::<typst::layout::PagedDocument>(cw.as_ref().unwrap());
+
+        match output.output {
+            Ok(paged_doc) => {
+                let pdf = typst_pdf::pdf(&paged_doc, &typst_pdf::PdfOptions::default()).ok()?;
+                Some(pdf)
+            }
+            Err(_) => None,
+        }
+    }));
+
+    result.unwrap_or(None)
 }
 
 #[flutter_rust_bridge::frb(sync)]
@@ -181,6 +226,8 @@ pub fn handle_editor_init_fonts(fonts: Vec<FontFileData>) {
     editor.preloaded_fonts = fonts;
     // Clear the world to force a rebuild with new fonts
     editor.world = None;
+    drop(editor);
+    *lock_compile_world() = None;
 }
 
 #[flutter_rust_bridge::frb(init)]
@@ -196,7 +243,7 @@ pub extern "C" fn frb_init_app() {
 fn init_rust() {
     use std::sync::Once;
     static START: Once = Once::new();
-    
+
     START.call_once(|| {
         #[cfg(target_os = "android")]
         {
@@ -217,10 +264,10 @@ fn init_rust() {
                 "unknown panic"
             };
             let location = info.location().map(|l| l.to_string()).unwrap_or_default();
-            
+
             #[cfg(target_os = "android")]
             log::error!("RUST_PANIC: {} at {}", msg, location);
-            
+
             eprintln!("RUST_PANIC: {} at {}", msg, location);
         }));
     });
@@ -274,7 +321,12 @@ pub fn handle_editor_export_pdf(path: String) -> Result<(), String> {
 }
 
 #[flutter_rust_bridge::frb(sync)]
-pub fn handle_editor_replace_range(start_u16: usize, end_u16: usize, text: String, cursor_u16: Option<usize>) {
+pub fn handle_editor_replace_range(
+    start_u16: usize,
+    end_u16: usize,
+    text: String,
+    cursor_u16: Option<usize>,
+) {
     let mut editor = lock_editor();
     editor.replace_range(start_u16, end_u16, &text, cursor_u16);
 }

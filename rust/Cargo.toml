@@ -31,6 +31,10 @@ android_logger = "0.14"
 log = "0.4"
 regex = "1.10"
 
+[lints.rust]
+# flutter_rust_bridge macros internally use #[cfg(frb_expand)]; this is expected
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(frb_expand)'] }
+
 [profile.release]
 strip = true
 lto = true
