@@ -39,6 +39,8 @@
           "rustc"
           "rust-src"
           "rust-std"
+          "clippy"
+          "rustfmt"
         ];
         
         rust = fenix.packages.${system}.combine [
@@ -67,6 +69,7 @@
         devShell = pkgs-stable.mkShell {
           buildInputs = [
             pkgs-stable.git
+            pkgs-stable.gnumake
             pkgs-stable.pkg-config
             pkgs-stable.cmake
             pkgs-stable.ninja
@@ -97,6 +100,17 @@
             pkgs-stable.libxkbcommon
             pkgs-stable.util-linux # for libmount
             pkgs-stable.libglvnd
+            pkgs-stable.at-spi2-core
+            pkgs-stable.libdatrie
+            pkgs-stable.libepoxy
+            pkgs-stable.libthai
+            pkgs-stable.pcre
+            pkgs-stable.xorg.libXdmcp
+            pkgs-stable.xorg.libXtst
+            pkgs-stable.xclip
+            pkgs-stable.wl-clipboard
+            pkgs-stable.openssl
+            pkgs-stable.llvmPackages.libclang
           ];
 
           shellHook = ''
@@ -109,6 +123,7 @@
             export LD_LIBRARY_PATH=${pkgs-stable.lib.makeLibraryPath (with pkgs-stable; [ stdenv.cc.cc.lib libGL libuuid zlib glib gtk3 pango cairo gdk-pixbuf atk dbus libxcrypt-legacy fontconfig util-linux libglvnd mesa ])}:''${LD_LIBRARY_PATH:-}
             export LIBGL_DRIVERS_PATH=${pkgs-stable.mesa.drivers}/lib/dri
             export __GLX_VENDOR_LIBRARY_NAME=mesa
+            export LIBCLANG_PATH="${pkgs-stable.llvmPackages.libclang.lib}/lib"
             
             echo "=== Typink Development Environment (Flake - Stable Flutter) ==="
             echo "Android SDK: $ANDROID_HOME"

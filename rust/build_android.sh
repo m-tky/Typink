@@ -30,15 +30,15 @@ for i in "${!targets[@]}"; do
     # Ensure NDK is available for cargo-ndk
     if [ -z "$ANDROID_NDK_HOME" ]; then
         echo "Error: ANDROID_NDK_HOME is not set."
-        echo "Please ensure you are running this inside the provided nix-shell."
+        echo "Please ensure you are running this inside the provided nix development environment."
         exit 1
     fi
 
     # Build using cargo-ndk
     if ! command -v cargo-ndk >/dev/null 2>&1; then
         echo "Error: cargo-ndk not found."
-        echo "On NixOS, please run this script inside 'nix-shell' using the provided shell.nix."
-        echo "Example: nix-shell ../shell.nix --run './build_android.sh'"
+        echo "On NixOS, please run this script inside 'nix develop' using the provided flake.nix."
+        echo "Example: nix develop -c sh -c './build_android.sh'"
         exit 1
     fi
     

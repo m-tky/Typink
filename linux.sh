@@ -1,2 +1,2 @@
 #!/usr/bin/env zsh
-nix-shell shell.nix --run "cd flutter_app && export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$(pwd)/rust/target/debug; flutter run -d linux" & disown
+nix develop -c sh -c "cd flutter_app && flutter run -d linux" & disown

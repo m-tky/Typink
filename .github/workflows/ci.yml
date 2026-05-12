@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  rust:
+    name: Rust Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v9
+
+      - name: Cargo Format
+        run: nix develop --command bash -c "cd rust && cargo fmt --check"
+
+      - name: Cargo Clippy
+        run: nix develop --command bash -c "cd rust && cargo clippy -- -D warnings"
+
+      - name: Cargo Test
+        run: nix develop --command bash -c "cd rust && cargo test"
+
+  flutter:
+    name: Flutter Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v9
+
+      - name: Flutter Format
+        run: nix develop --command bash -c "cd flutter_app && dart format --set-exit-if-changed ."
+
+      - name: Flutter Analyze
+        run: nix develop --command bash -c "cd flutter_app && flutter analyze"
+
+      - name: Flutter Test
+        run: nix develop --command bash -c "cd flutter_app && flutter test"
