@@ -29,50 +29,119 @@ Notebook/
 
 Typink uses a hybrid architecture with a Rust core. **Nix** is required to manage the toolchain (Flutter SDK, Rust, Android NDK).
 
-### 1. Environment Setup
+Use the `Makefile` at the project root — it wraps every command in the correct `nix develop` environment automatically.
 
-Always enter the Nix shell from the project root before building or running:
 ```bash
-nix-shell shell.nix
+make help          # list all targets
+
+make run           # build Rust (debug) + run on Linux
+make build-linux   # build Rust (release) + package for Linux
+
+make dev-android   # cross-compile Rust (arm64) + run on device
+make build-apk     # cross-compile Rust (arm64) + build release APK
+
+make bridge        # regenerate Flutter↔Rust bridge
+make test          # run all tests
+make clean         # clean Flutter build artefacts
 ```
 
-### 2. Linux Development
-
-#### Build Rust Core
-```bash
-nix-shell shell.nix --run "cd rust && cargo build"
-```
-
-#### Run Application
-```bash
-# Note: LD_LIBRARY_PATH is required for the Linux app to find the Rust library
-nix-shell shell.nix --run "cd flutter_app && export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$(pwd)/../rust/target/debug; flutter run -d linux"
-```
-
-### 3. Android Development
-
-#### Build Rust Core (Cross-Compile)
-This script handles the cross-compilation for `arm64-v8a` and bundles the `.so` files into the Flutter project.
-```bash
-nix-shell shell.nix --run "cd rust && ./build_android.sh"
-```
-
-#### Run Application
-```bash
-nix-shell shell.nix --run "cd flutter_app && flutter run"
-```
-
-#### Build APK
-```bash
-nix-shell shell.nix --run "cd flutter_app && flutter build apk"
-```
-The optimized APK will be located at:
-`flutter_app/build/app/outputs/flutter-apk/app-release.apk`
+The optimized APK will be at `flutter_app/build/app/outputs/flutter-apk/app-release.apk`.
 
 ---
 
 > [!TIP]
-> If you encounter "file INSTALL cannot find" or other directory errors, run `flutter clean` in the `flutter_app` directory inside the nix-shell.
+> If you encounter "file INSTALL cannot find" or other directory errors, run `make clean`.
+
+## Installation
+
+### NixOS
+
+The flake ships a ready-to-run package (`packages.default`) and app (`apps.default`).
+
+**Run without installing:**
+```bash
+nix run github:m-tky/Typink
+```
+
+**Install to your user profile:**
+```bash
+nix profile install github:m-tky/Typink
+```
+
+**Add to a NixOS system flake** (`/etc/nixos/flake.nix`):
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    typink.url  = "github:m-tky/Typink";
+  };
+
+  outputs = { nixpkgs, typink, ... }: {
+    nixosConfigurations.my-machine = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./configuration.nix
+        ({ pkgs, ... }: {
+          environment.systemPackages = [
+            typink.packages.x86_64-linux.default
+          ];
+        })
+      ];
+    };
+  };
+}
+```
+
+**home-manager:**
+```nix
+home.packages = [ inputs.typink.packages.${pkgs.system}.default ];
+```
+
+**Build locally from source:**
+```bash
+nix build .       # output → ./result/bin/typink
+nix run .         # build and launch immediately
+```
+
+---
+
+### Other Linux distributions (Ubuntu, Arch, Fedora, …)
+
+Download the pre-built bundle from the [Releases](https://github.com/m-tky/Typink/releases) page and extract it, or build from source with `make build-linux`.
+
+**Install:**
+
+```bash
+sudo cp -r typink-bundle /opt/typink
+sudo ln -sf /opt/typink/typink /usr/local/bin/typink
+```
+
+**Add a desktop launcher:**
+
+```bash
+cat > ~/.local/share/applications/typink.desktop << 'EOF'
+[Desktop Entry]
+Name=Typink
+Comment=Scientific notebook with Typst and handwriting
+Exec=/opt/typink/typink
+Icon=/opt/typink/data/flutter_assets/icon.png
+Type=Application
+Categories=Office;Education;
+EOF
+```
+
+**If the app fails to start**, install the required GTK 3 libraries:
+
+| Distro | Command |
+|--------|---------|
+| Ubuntu / Debian | `sudo apt install libgtk-3-0 libglib2.0-0 libpango-1.0-0 libharfbuzz0b libatk1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libfontconfig1 libfreetype6` |
+| Arch Linux | `sudo pacman -S gtk3 glib2 pango harfbuzz atk cairo gdk-pixbuf2 fontconfig freetype2` |
+| Fedora / RHEL | `sudo dnf install gtk3 glib2 pango harfbuzz atk cairo gdk-pixbuf2 fontconfig freetype` |
+
+> [!NOTE]
+> Any GNOME, KDE, or Xfce desktop already has these. They're only missing on minimal/server installs.
+
+---
 
 ## User Guide
 
