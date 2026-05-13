@@ -541,6 +541,11 @@ class HeadlessEditorViewState extends EditorStateBase
           _currentVerticalOffset = verticalOffset;
         });
 
+        ref.read(cursorPositionProvider.notifier).state = (
+          _view!.cursorLine.toInt() + 1,
+          _view!.cursorColumnU16.toInt() + 1,
+        );
+
         if (syncIme) {
           _updateConnectionState();
         }

@@ -218,52 +218,112 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                ref.read(debouncedContentProvider.notifier).state =
-                    bridge.getEditorContent();
-              },
-              tooltip: 'Compile Now',
-            ),
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: () => _editorKey.currentState?.save(),
-              tooltip: 'Save',
+              icon: const Icon(Icons.add_photo_alternate),
+              onPressed: () => _addOrEditDrawing(),
+              tooltip: 'Insert Drawing',
             ),
             IconButton(
               icon: const Icon(Icons.picture_as_pdf),
               onPressed: _exportPdf,
               tooltip: 'Export PDF',
             ),
-            IconButton(
-              icon: const Icon(Icons.add_photo_alternate),
-              onPressed: () => _addOrEditDrawing(),
-              tooltip: 'Add Handwriting',
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => Navigator.of(context).pushNamed('/settings'),
-              tooltip: 'Settings',
-            ),
             const VerticalDivider(width: 1, indent: 12, endIndent: 12),
-            _LayoutActionButton(
-              icon: Icons.edit_note,
-              mode: LayoutMode.editorOnly,
-              tooltip: 'Editor Only',
+            // Layout mode popup (replaces 3 separate buttons + orientation button)
+            PopupMenuButton<String>(
+              icon: Icon(_currentLayoutIcon()),
+              tooltip: 'View Layout',
+              onSelected: (value) {
+                if (value == 'editorOnly') {
+                  ref.read(layoutModeProvider.notifier).state =
+                      LayoutMode.editorOnly;
+                } else if (value == 'split') {
+                  ref.read(layoutModeProvider.notifier).state =
+                      LayoutMode.split;
+                } else if (value == 'previewOnly') {
+                  ref.read(layoutModeProvider.notifier).state =
+                      LayoutMode.previewOnly;
+                } else if (value == 'orientation') {
+                  final current = ref.read(splitOrientationProvider);
+                  ref.read(splitOrientationProvider.notifier).state =
+                      current == SplitMode.horizontal
+                          ? SplitMode.vertical
+                          : SplitMode.horizontal;
+                }
+              },
+              itemBuilder: (context) {
+                final currentMode = ref.read(layoutModeProvider);
+                final currentOrientation = ref.read(splitOrientationProvider);
+                return [
+                  CheckedPopupMenuItem(
+                    value: 'editorOnly',
+                    checked: currentMode == LayoutMode.editorOnly,
+                    child: const Text('Editor Only'),
+                  ),
+                  CheckedPopupMenuItem(
+                    value: 'split',
+                    checked: currentMode == LayoutMode.split,
+                    child: const Text('Split View'),
+                  ),
+                  CheckedPopupMenuItem(
+                    value: 'previewOnly',
+                    checked: currentMode == LayoutMode.previewOnly,
+                    child: const Text('Preview Only'),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'orientation',
+                    child: Text(currentOrientation == SplitMode.horizontal
+                        ? 'Switch to Vertical Split'
+                        : 'Switch to Horizontal Split'),
+                  ),
+                ];
+              },
             ),
-            _LayoutActionButton(
-              icon: Icons.article_outlined,
-              mode: LayoutMode.previewOnly,
-              tooltip: 'Preview Only',
+            // Overflow: save, compile, settings
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              tooltip: 'More',
+              onSelected: (value) {
+                if (value == 'save') {
+                  _editorKey.currentState?.save();
+                } else if (value == 'compile') {
+                  ref.read(debouncedContentProvider.notifier).state =
+                      bridge.getEditorContent();
+                } else if (value == 'settings') {
+                  Navigator.of(context).pushNamed('/settings');
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'save',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(Icons.save),
+                    title: Text('Save'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'compile',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(Icons.refresh),
+                    title: Text('Compile Now'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'settings',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(Icons.settings),
+                    title: Text('Settings'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
-            _LayoutActionButton(
-              icon: Icons.view_quilt_outlined,
-              mode: LayoutMode.split,
-              tooltip: 'Split View',
-            ),
-            if (ref.watch(layoutModeProvider) == LayoutMode.split)
-              _OrientationActionButton(),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
           ],
         ),
         body: CallbackShortcuts(
@@ -324,6 +384,17 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
     });
   }
 
+  IconData _currentLayoutIcon() {
+    switch (ref.read(layoutModeProvider)) {
+      case LayoutMode.editorOnly:
+        return Icons.edit_note;
+      case LayoutMode.previewOnly:
+        return Icons.article_outlined;
+      case LayoutMode.split:
+        return Icons.view_quilt_outlined;
+    }
+  }
+
   Widget _buildStatusBar(AppTheme theme) {
     final settings = ref.watch(settingsProvider);
     final mode = ref.watch(vimModeProvider);
@@ -334,12 +405,23 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
             ? Colors.green
             : (mode == v.VimMode.visual ? Colors.orange : Colors.blue));
 
+    final (cursorLine, cursorCol) = ref.watch(cursorPositionProvider);
+    final currentPage = ref.watch(currentPageProvider);
+    final diagnostics = ref.watch(versionedDiagnosticsProvider);
+    final errorCount = diagnostics.items.where((d) => d.severity == 1).length;
+    final warnCount = diagnostics.items.where((d) => d.severity == 2).length;
+
+    // Get total pages from compile result (non-blocking)
+    final compileAsync = ref.watch(typstCompileResultProvider);
+    final totalPages = compileAsync.valueOrNull?.pages.length ?? 0;
+
     return Container(
       height: 24,
       color: theme.themeData.colorScheme.surface,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         children: [
+          // Mode badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             color: modeColor,
@@ -352,11 +434,53 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
             ),
           ),
           const SizedBox(width: 8),
+          // Cursor position
           Text(
-            'Typink Pro - Headless Core Active',
+            '$cursorLine:$cursorCol',
             style: TextStyle(
-                color: theme.editorTextColor.withOpacity(0.5), fontSize: 10),
+                color: theme.editorTextColor.withOpacity(0.7), fontSize: 11),
           ),
+          if (totalPages > 1) ...[
+            const SizedBox(width: 12),
+            Text(
+              'Page ${currentPage + 1}/$totalPages',
+              style: TextStyle(
+                  color: theme.editorTextColor.withOpacity(0.7), fontSize: 11),
+            ),
+          ],
+          const Spacer(),
+          // Diagnostics summary
+          if (errorCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 12, color: Colors.red),
+                  const SizedBox(width: 2),
+                  Text('$errorCount',
+                      style: const TextStyle(color: Colors.red, fontSize: 11)),
+                ],
+              ),
+            ),
+          if (warnCount > 0)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.warning_amber_outlined,
+                    size: 12, color: Colors.orange),
+                const SizedBox(width: 2),
+                Text('$warnCount',
+                    style: const TextStyle(color: Colors.orange, fontSize: 11)),
+              ],
+            ),
+          if (errorCount == 0 && warnCount == 0 && totalPages > 0)
+            Text(
+              '✓',
+              style:
+                  TextStyle(color: Colors.green.withOpacity(0.8), fontSize: 11),
+            ),
+          const SizedBox(width: 4),
         ],
       ),
     );
@@ -396,8 +520,32 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
               },
             ));
     } else if (diagnostics.isEmpty && !isCompiling) {
-      children.add(Center(
-          child: Text('No Output', style: TextStyle(color: Colors.grey))));
+      children.add(
+        Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.article_outlined,
+                  size: 48, color: Colors.grey.withOpacity(0.4)),
+              const SizedBox(height: 12),
+              Text(
+                'No output yet',
+                style: TextStyle(
+                  color: Colors.grey.withOpacity(0.7),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Start typing to see the preview',
+                style: TextStyle(
+                    color: Colors.grey.withOpacity(0.5), fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     children.add(
       Positioned(
@@ -412,6 +560,7 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
             if (state.figures.isEmpty) {
               _addOrEditDrawing();
             } else {
+              final svgMap = ref.read(handwritingSvgMapProvider);
               showModalBottomSheet(
                 context: context,
                 builder: (context) {
@@ -419,17 +568,46 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
                     shrinkWrap: true,
                     children: [
                       ListTile(
-                          title: Text('Select figure to edit',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
+                        title: Text(
+                          'Select figure to edit',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                       ...state.figures.keys.map((id) {
                         final isEditable = ref
                             .read(handwritingProvider.notifier)
                             .isEditable(id);
                         return ListTile(
-                          leading: Icon(
-                              isEditable ? Icons.brush : Icons.visibility,
-                              color: isEditable ? null : Colors.grey),
-                          title: Text(id + (isEditable ? '' : ' (Ready-Only)')),
+                          leading: SizedBox(
+                            width: 56,
+                            height: 42,
+                            child: (svgMap[id]?.isNotEmpty == true)
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: SvgPicture.string(
+                                      svgMap[id]!,
+                                      fit: BoxFit.contain,
+                                      colorFilter: (isEditable)
+                                          ? null
+                                          : const ColorFilter.mode(
+                                              Colors.grey,
+                                              BlendMode.saturation,
+                                            ),
+                                    ),
+                                  )
+                                : Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Icon(
+                                      Icons.image_outlined,
+                                      size: 20,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                          ),
+                          title: Text(id + (isEditable ? '' : ' (Read-Only)')),
                           onTap: isEditable
                               ? () {
                                   Navigator.pop(context);
@@ -437,7 +615,7 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
                                 }
                               : null,
                           trailing: IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
                               Navigator.pop(context);
                               _deleteActiveFigure(id);
@@ -446,8 +624,8 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
                         );
                       }),
                       ListTile(
-                        leading: Icon(Icons.add),
-                        title: Text('Add new drawing'),
+                        leading: const Icon(Icons.add),
+                        title: const Text('Add new drawing'),
                         onTap: () {
                           Navigator.pop(context);
                           _addOrEditDrawing();
@@ -465,37 +643,105 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
 
     if (diagnostics.isNotEmpty) {
       final hasErrors = diagnostics.any((d) => d.severity == 1);
+      final isExpanded = ref.watch(isDiagnosticsPanelExpandedProvider);
+      final errorCount = diagnostics.where((d) => d.severity == 1).length;
+      final warnCount = diagnostics.where((d) => d.severity == 2).length;
+      final headerColor =
+          (hasErrors ? Colors.red : Colors.orange).withOpacity(0.92);
+
       children.add(
         Positioned(
           bottom: 0,
           left: 0,
           right: 0,
-          child: Container(
-            constraints: BoxConstraints(maxHeight: 200),
-            color: (hasErrors ? Colors.red : Colors.orange).withOpacity(0.9),
-            padding: EdgeInsets.all(8),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: diagnostics.length,
-              itemBuilder: (context, index) {
-                final diag = diagnostics[index];
-                final isError = diag.severity == 1;
-                return ListTile(
-                  dense: true,
-                  title: Text(diag.message,
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
-                  subtitle: Text(
-                      'Line: ${diag.line + 1}, Column: ${diag.column + 1}',
-                      style: TextStyle(color: Colors.white70)),
-                  leading: Icon(
-                      isError
-                          ? Icons.error_outline
-                          : Icons.warning_amber_outlined,
-                      color: Colors.white),
-                );
-              },
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Collapsed header (always visible)
+              GestureDetector(
+                onTap: () => ref
+                    .read(isDiagnosticsPanelExpandedProvider.notifier)
+                    .state = !isExpanded,
+                child: Container(
+                  color: headerColor,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        hasErrors
+                            ? Icons.error_outline
+                            : Icons.warning_amber_outlined,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        [
+                          if (errorCount > 0)
+                            '$errorCount error${errorCount > 1 ? 's' : ''}',
+                          if (warnCount > 0)
+                            '$warnCount warning${warnCount > 1 ? 's' : ''}',
+                        ].join(', '),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_up,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Expanded detail list
+              if (isExpanded)
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  color: headerColor.withOpacity(0.95),
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: diagnostics.length,
+                    itemBuilder: (context, index) {
+                      final diag = diagnostics[index];
+                      final isError = diag.severity == 1;
+                      return ListTile(
+                        dense: true,
+                        title: Text(
+                          diag.message,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Line: ${diag.line + 1}, Col: ${diag.column + 1}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                        leading: Icon(
+                          isError
+                              ? Icons.error_outline
+                              : Icons.warning_amber_outlined,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
           ),
         ),
       );
@@ -648,8 +894,39 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
                     width: 8,
                     color: Colors.transparent,
                     child: Center(
-                        child: Container(
-                            width: 1, color: theme.themeData.dividerColor)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 1,
+                            height: 16,
+                            color: theme.themeData.dividerColor,
+                          ),
+                          const SizedBox(height: 2),
+                          ...List.generate(
+                            3,
+                            (_) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: theme.themeData.dividerColor
+                                      .withOpacity(0.8),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Container(
+                            width: 1,
+                            height: 16,
+                            color: theme.themeData.dividerColor,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -678,8 +955,40 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
                     height: 8,
                     color: Colors.transparent,
                     child: Center(
-                        child: Container(
-                            height: 1, color: theme.themeData.dividerColor)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            height: 1,
+                            width: 16,
+                            color: theme.themeData.dividerColor,
+                          ),
+                          const SizedBox(width: 2),
+                          ...List.generate(
+                            3,
+                            (_) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 2),
+                              child: Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: theme.themeData.dividerColor
+                                      .withOpacity(0.8),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Container(
+                            height: 1,
+                            width: 16,
+                            color: theme.themeData.dividerColor,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -811,52 +1120,5 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
               'No preview available for ${p.basename(selectedFile.path)}',
               style: const TextStyle(color: Colors.grey)));
     }
-  }
-}
-
-class _LayoutActionButton extends ConsumerWidget {
-  final IconData icon;
-  final LayoutMode mode;
-  final String tooltip;
-
-  const _LayoutActionButton({
-    required this.icon,
-    required this.mode,
-    required this.tooltip,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentMode = ref.watch(layoutModeProvider);
-    final isActive = currentMode == mode;
-
-    return IconButton(
-      icon: Icon(icon),
-      onPressed: () => ref.read(layoutModeProvider.notifier).state = mode,
-      tooltip: tooltip,
-      color: isActive ? Theme.of(context).colorScheme.primary : Colors.grey,
-    );
-  }
-}
-
-class _OrientationActionButton extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final orientation = ref.watch(splitOrientationProvider);
-    final isHorizontal = orientation == SplitMode.horizontal;
-
-    return IconButton(
-      icon: Icon(isHorizontal
-          ? Icons.view_agenda_outlined
-          : Icons.view_sidebar_outlined),
-      onPressed: () {
-        ref.read(splitOrientationProvider.notifier).state =
-            isHorizontal ? SplitMode.vertical : SplitMode.horizontal;
-      },
-      tooltip: isHorizontal
-          ? 'Switch to Vertical Split'
-          : 'Switch to Horizontal Split',
-      color: Colors.grey,
-    );
   }
 }

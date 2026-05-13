@@ -57,6 +57,12 @@ final isComposingProvider = StateProvider<bool>((ref) => false);
 final versionedDiagnosticsProvider =
     StateProvider<VersionedDiagnostics>((ref) => VersionedDiagnostics.empty());
 
+/// Cursor position: (line 1-indexed, column 1-indexed)
+final cursorPositionProvider = StateProvider<(int, int)>((ref) => (1, 1));
+
+/// Whether the diagnostics panel in the preview is expanded
+final isDiagnosticsPanelExpandedProvider = StateProvider<bool>((ref) => false);
+
 enum LayoutMode {
   editorOnly,
   previewOnly,
