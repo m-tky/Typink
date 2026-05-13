@@ -143,7 +143,8 @@ fn traverse_and_collect(
             if is_op || is_cl {
                 // Push pending non-bracket text
                 if char_offset > last_pushed_offset
-                    && (effective_tag.is_some() || current_heading_level.is_some()) {
+                    && (effective_tag.is_some() || current_heading_level.is_some())
+                {
                     spans.push(HighlightSpan {
                         start: byte_to_u16[node_start + last_pushed_offset],
                         end: byte_to_u16[node_start + char_offset],
@@ -179,7 +180,8 @@ fn traverse_and_collect(
 
         // Push remaining text
         if char_offset > last_pushed_offset
-            && (effective_tag.is_some() || current_heading_level.is_some()) {
+            && (effective_tag.is_some() || current_heading_level.is_some())
+        {
             spans.push(HighlightSpan {
                 start: byte_to_u16[node_start + last_pushed_offset],
                 end: byte_to_u16[node_start + char_offset],

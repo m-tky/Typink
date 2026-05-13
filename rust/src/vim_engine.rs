@@ -120,7 +120,8 @@ impl VimEngine {
         if matches!(
             self.mode,
             VimMode::Normal | VimMode::Visual | VimMode::VisualLine
-        ) && is_digit {
+        ) && is_digit
+        {
             let digit = key.parse::<u32>().unwrap();
             if self.count.is_none() && digit == 0 {
                 // Falls through to handle_normal (0 as movement)
@@ -543,8 +544,7 @@ impl VimEngine {
                 self.last_char_motion = Some((op, target_char));
                 self.pending_operator = None;
                 return Some(self.build_action());
-            } else if op == 'g'
-                && (key == "e" || key == "E") {
+            } else if op == 'g' && (key == "e" || key == "E") {
                 for _ in 0..repeat {
                     if self.line == 0 && self.col == 0 {
                         break;
