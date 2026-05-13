@@ -59,7 +59,7 @@ class WorkspaceNotifier {
     }
 
     // Rename the main entity
-    final renamed = await entity.rename(newPath);
+    await entity.rename(newPath);
 
     // Update active file provider if necessary
     final activeFile = ref.read(currentTypFileProvider);
@@ -199,7 +199,7 @@ class WorkspaceNotifier {
     }
 
     // 1. メインのエンティティを移動
-    final moved = await entity.rename(newPath);
+    await entity.rename(newPath);
 
     // 2. アクティブなファイルならプロバイダーを更新
     final activeFile = ref.read(currentTypFileProvider);
@@ -224,8 +224,9 @@ class WorkspaceNotifier {
           Directory(p.join(oldParent, 'figures', oldNameNoExt));
       if (await figuresFolder.exists()) {
         final newFiguresParent = Directory(p.join(targetParentPath, 'figures'));
-        if (!await newFiguresParent.exists())
+        if (!await newFiguresParent.exists()) {
           await newFiguresParent.create(recursive: true);
+        }
         await figuresFolder.rename(p.join(newFiguresParent.path, oldNameNoExt));
       }
     }

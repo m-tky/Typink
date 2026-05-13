@@ -225,7 +225,7 @@ class _FileTreeState extends ConsumerState<FileTree> {
       );
 
       if (isDir && _expandedDirs.contains(entity.path)) {
-        widgets.addAll(_buildTree(entity as Directory, level + 1));
+        widgets.addAll(_buildTree(entity, level + 1));
       }
     }
     return widgets;

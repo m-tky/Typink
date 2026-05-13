@@ -374,8 +374,9 @@ class HandwritingNotifier extends StateNotifier<HandwritingState> {
   double _distPointToSegment(Offset p, Offset a, Offset b) {
     final double l2 =
         (a.dx - b.dx) * (a.dx - b.dx) + (a.dy - b.dy) * (a.dy - b.dy);
-    if (l2 == 0.0)
+    if (l2 == 0.0) {
       return (p.dx - a.dx) * (p.dx - a.dx) + (p.dy - a.dy) * (p.dy - a.dy);
+    }
     double t =
         ((p.dx - a.dx) * (b.dx - a.dx) + (p.dy - a.dy) * (b.dy - a.dy)) / l2;
     t = t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t);

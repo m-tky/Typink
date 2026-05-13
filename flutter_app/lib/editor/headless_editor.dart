@@ -6,10 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:path/path.dart' as p;
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../frb_generated.dart/api.dart' as bridge;
 import '../frb_generated.dart/editor.dart';
@@ -66,7 +63,6 @@ abstract class EditorStateBase extends ConsumerState<HeadlessEditorView>
   int _completionIndex = -1;
   double _viewportHeight = 0;
   double _viewportWidth = 0;
-  double _lastHeight = 0;
   bool _ctrlPressed = false;
   bool _shiftPressed = false;
   final ScrollController _completionScrollController = ScrollController();
@@ -81,7 +77,7 @@ abstract class EditorStateBase extends ConsumerState<HeadlessEditorView>
   int _activeSnippetIndex = -1;
   int? _snippetBaseOffset;
 
-  void _refreshView({bool syncIme = true, bool debounced = false});
+  void _refreshView({bool syncIme = true});
   void _triggerHighlight();
   void _triggerCompletion();
   bool tryAutoExpandSnippetSync();
@@ -121,8 +117,9 @@ abstract class EditorStateBase extends ConsumerState<HeadlessEditorView>
     int localLineIdx = cursorLineIdx - _baseLineIndex;
 
     // If not in current view, we try to use last known or return lastKnown
-    if (localLineIdx < 0 || localLineIdx >= _view!.lines.length)
+    if (localLineIdx < 0 || localLineIdx >= _view!.lines.length) {
       return _lastCaretRect;
+    }
 
     final line = _view!.lines[localLineIdx];
     final textPainter = TextPainter(
@@ -243,7 +240,7 @@ class HeadlessEditorViewState extends EditorStateBase
         insertionPoint = BigInt.from(fullContent.length);
         // 最終行に改行がない場合は、挿入するテキストの前に改行が必要
         if (!fullContent.endsWith('\n')) {
-          text = '\n' + text;
+          text = '\n$text';
         }
       }
     }
@@ -272,6 +269,7 @@ class HeadlessEditorViewState extends EditorStateBase
       if (widget.onChanged != null) {
         widget.onChanged!(bridge.getEditorContent());
       }
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('File saved successfully')),
       );
@@ -283,11 +281,13 @@ class HeadlessEditorViewState extends EditorStateBase
   Future<void> exportPdf(String path) async {
     try {
       await bridge.handleEditorExportPdf(path: path);
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('PDF exported to $path')),
       );
     } catch (e) {
       debugPrint('Failed to export PDF: $e');
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Export failed: $e'), backgroundColor: Colors.red),
@@ -330,6 +330,7 @@ class HeadlessEditorViewState extends EditorStateBase
     }
   }
 
+  @override
   void _closeInputConnectionIfNeeded() {
     _connection?.close();
     _connection = null;
@@ -876,7 +877,6 @@ class HeadlessEditorViewState extends EditorStateBase
       return const Center(child: CircularProgressIndicator());
     }
 
-    final hasFocus = widget.focusNode.hasFocus;
     final charHeight =
         widget.textStyle.fontSize! * (widget.textStyle.height ?? 1.4);
     final double scrollOffset =
@@ -1129,7 +1129,7 @@ class HeadlessEditorViewState extends EditorStateBase
     final scrollOffset = _completionScrollController.offset;
     final itemTop = index * itemHeight + padding;
     final itemBottom = itemTop + itemHeight;
-    final double bufferHeight = 2 * itemHeight;
+    const double bufferHeight = 2 * itemHeight;
 
     if (itemTop - bufferHeight < scrollOffset) {
       _completionScrollController.animateTo(
@@ -1292,7 +1292,7 @@ class HeadlessEditorViewState extends EditorStateBase
                     decoration: BoxDecoration(
                       color: Theme.of(context)
                           .colorScheme
-                          .surfaceVariant
+                          .surfaceContainerHighest
                           .withOpacity(0.2),
                       border: Border(
                           left: BorderSide(
@@ -1479,8 +1479,9 @@ class HeadlessEditorViewState extends EditorStateBase
       // 1. Check for image in clipboard
       debugPrint('Syncing clipboard... Checking for image.');
       Uint8List? imageBytes = await Pasteboard.image;
-      if (imageBytes != null)
+      if (imageBytes != null) {
         debugPrint('Image found via Pasteboard: ${imageBytes.length} bytes');
+      }
 
       // Fallback for Linux (Wayland: wl-paste, X11: xclip)
       if (imageBytes == null && Platform.isLinux) {
@@ -1556,10 +1557,11 @@ class HeadlessEditorViewState extends EditorStateBase
     return false;
   }
 
-  Future<void> _jumpToSnippetPlaceholder(int index, int baseOffset) async {
-    if (index < 0 || index >= _snippetPlaceholders.length) return;
+  @override
+  Future<void> _jumpToSnippetPlaceholder(int pIndex, int baseOffset) async {
+    if (pIndex < 0 || pIndex >= _snippetPlaceholders.length) return;
 
-    final p = _snippetPlaceholders[index];
+    final p = _snippetPlaceholders[pIndex];
     final globalStart = baseOffset + p.offset;
     final globalEnd = globalStart + p.length;
 

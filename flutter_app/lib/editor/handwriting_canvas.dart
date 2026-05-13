@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:typed_data';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 import 'providers.dart';
 
@@ -170,7 +169,7 @@ class HandwritingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    final handleSize = 8.0;
+    const handleSize = 8.0;
     final corners = [
       rect.inflate(4).topLeft,
       rect.inflate(4).topRight,
@@ -235,8 +234,9 @@ class _HandwritingCanvasState extends ConsumerState<HandwritingCanvas> {
             if (tool == DrawingTool.eraser) {
               setState(() => _cursorPosition = event.localPosition);
             } else {
-              if (_cursorPosition != null)
+              if (_cursorPosition != null) {
                 setState(() => _cursorPosition = null);
+              }
             }
           },
           onExit: (_) => setState(() => _cursorPosition = null),

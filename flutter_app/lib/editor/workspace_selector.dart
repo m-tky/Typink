@@ -56,6 +56,7 @@ class _WorkspaceSelectorPageState extends ConsumerState<WorkspaceSelectorPage> {
                     } catch (e) {
                       debugPrint('File picker error: $e');
                       if (mounted) {
+                        // ignore: use_build_context_synchronously
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(

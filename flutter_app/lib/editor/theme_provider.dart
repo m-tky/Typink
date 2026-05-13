@@ -279,8 +279,7 @@ class AppTheme {
           colorScheme: const ColorScheme.dark(
             primary: Color(0xFF8AADF4), // Blue
             secondary: Color(0xFFF5BDE6), // Pink
-            surface: Color(0xFF36394F), // Surface0
-            background: Color(0xFF24273A),
+            surface: Color(0xFF36394F),
           ),
         ),
         editorBackground: const Color(0xFF24273A), // Base
@@ -298,7 +297,6 @@ class AppTheme {
             primary: Color(0xFF61AFEF),
             secondary: Color(0xFFC678DD),
             surface: Color(0xFF21252B),
-            background: Color(0xFF282C34),
           ),
         ),
         editorBackground: const Color(0xFF282C34),
@@ -315,8 +313,7 @@ class AppTheme {
           colorScheme: const ColorScheme.dark(
             primary: Color(0xFF719CD6), // Blue base
             secondary: Color(0xFF9D79D6), // Magenta base
-            surface: Color(0xFF192330), // BG1
-            background: Color(0xFF131A24),
+            surface: Color(0xFF192330),
           ),
         ),
         editorBackground: const Color(0xFF192330), // BG1

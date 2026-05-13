@@ -9,7 +9,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import '../frb_generated.dart/api.dart' as bridge;
-import '../frb_generated.dart/frb_generated.dart';
 import 'handwriting_provider.dart';
 import 'settings_provider.dart';
 
@@ -84,8 +83,9 @@ final typstCompileResultProvider =
   final userContent = ref.watch(debouncedContentProvider);
   final currentVersion = ref.read(docVersionProvider);
 
-  if (userContent.isEmpty)
-    return bridge.TypstCompileResult(pages: [], diagnostics: []);
+  if (userContent.isEmpty) {
+    return const bridge.TypstCompileResult(pages: [], diagnostics: []);
+  }
 
   final settings = ref.watch(settingsProvider);
   final svgMap = ref.watch(handwritingSvgMapProvider);
@@ -193,7 +193,6 @@ final typstCompileResultProvider =
 class PersistenceManager {
   final Ref ref;
   Timer? _typstSaveTimer;
-  Timer? _settingsSaveTimer;
   String? _lastSavedContent;
 
   // Robust state management
@@ -353,6 +352,7 @@ class PersistenceManager {
     if (await settingsFile.exists()) {
       try {
         final json = jsonDecode(await settingsFile.readAsString());
+        // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
         ref.read(settingsProvider.notifier).state = AppSettings.fromJson(json);
         debugPrint('Loaded settings from disk');
       } catch (e) {

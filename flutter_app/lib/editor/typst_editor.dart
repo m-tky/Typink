@@ -3,22 +3,17 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../frb_generated.dart/api.dart' as bridge;
-import '../frb_generated.dart/frb_generated.dart';
-import '../frb_generated.dart/editor.dart';
 import '../frb_generated.dart/vim_engine.dart' as v;
 import 'headless_editor.dart';
-import 'dart:typed_data';
-import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'drawing_pad.dart';
-import 'handwriting_canvas.dart';
 import 'file_tree.dart';
 import 'package:flutter/services.dart';
 import 'providers.dart';
 import 'theme_provider.dart';
 import 'workspace_provider.dart';
 import 'vim_provider.dart';
-import 'package:pdfx/pdfx.dart'; // Ensure pdfx is imported for the preview
+// Ensure pdfx is imported for the preview
 import 'package:flutter_svg/flutter_svg.dart';
 
 class TypstEditorPage extends ConsumerStatefulWidget {
@@ -128,9 +123,11 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
       if (existingId == null) {
         final relWidth = notifier.calculateRelativeWidth(id);
         String widthStr = '100%';
-        if (relWidth < 0.3)
+        if (relWidth < 0.3) {
           widthStr = '40%';
-        else if (relWidth < 0.7) widthStr = '70%';
+        } else if (relWidth < 0.7) {
+          widthStr = '70%';
+        }
 
         // 挿入するSnippet
         // insertAfterCurrentLine: true を使うので、Snippet側では余計な先頭改行を控える（1つの改行で十分）
@@ -145,30 +142,12 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
     }
   }
 
-  void _cleanGhostFigures(String text) {
-    final regExp = RegExp(r'figures/(fig_\d+)\.svg');
-    final matches = regExp.allMatches(text);
-    final referencedIds = matches.map((m) => m.group(1)).toSet();
-
-    final currentMap = ref.read(handwritingProvider);
-    final existingIds = currentMap.figures.keys.toSet();
-    final deadIds = existingIds.difference(referencedIds);
-    if (deadIds.isNotEmpty) {
-      final newState = Map<String, List<Stroke>>.from(currentMap.figures);
-      for (final id in deadIds) {
-        newState.remove(id);
-      }
-      Future.microtask(() {
-        final notifier = ref.read(handwritingProvider.notifier);
-        notifier.state = notifier.state.copyWith(figures: newState);
-      });
-    }
-  }
-
   void _deleteActiveFigure(String id) {
     final notifier = ref.read(handwritingProvider.notifier);
+    // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
     final nextFigures = Map<String, List<Stroke>>.from(notifier.state.figures);
     nextFigures.remove(id);
+    // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
     notifier.state = notifier.state.copyWith(figures: nextFigures);
 
     // TODO: Bridge delete figure to Rust
@@ -177,8 +156,6 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
 
   @override
   Widget build(BuildContext context) {
-    final vimMode = ref.watch(vimModeProvider);
-    final compileResultAsync = ref.watch(typstCompileResultProvider);
     final theme = ref.watch(activeThemeDetailedProvider);
     final settings = ref.watch(settingsProvider);
 
@@ -554,7 +531,7 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
         child: FloatingActionButton(
           mini: true,
           heroTag: 'edit',
-          child: Icon(Icons.edit_note),
+          child: const Icon(Icons.edit_note),
           onPressed: () {
             final state = ref.read(handwritingProvider);
             if (state.figures.isEmpty) {
@@ -567,7 +544,7 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
                   return ListView(
                     shrinkWrap: true,
                     children: [
-                      ListTile(
+                      const ListTile(
                         title: Text(
                           'Select figure to edit',
                           style: TextStyle(fontWeight: FontWeight.bold),
@@ -753,12 +730,12 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
           top: 16,
           right: 16,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.black54,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
@@ -816,8 +793,8 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
   }
 
   Future<void> _exportPdf() async {
-    final result = await bridge.handleEditorGetTotalLines();
-    if (result == 0) return;
+    final result = bridge.handleEditorGetTotalLines();
+    if (result == BigInt.zero) return;
 
     // Use file picker to select destination
     // For now, on Linux, we might just use a standard path or ask.
@@ -1047,10 +1024,11 @@ class _TypstEditorPageState extends ConsumerState<TypstEditorPage>
 
   Widget _buildGenericPreview(AppTheme theme) {
     final selectedFile = ref.watch(selectedFileProvider);
-    if (selectedFile == null)
+    if (selectedFile == null) {
       return const Center(
           child:
               Text('No file selected', style: TextStyle(color: Colors.grey)));
+    }
 
     final extension = p.extension(selectedFile.path).toLowerCase();
     if (extension == '.typ' || extension == '.typst') {

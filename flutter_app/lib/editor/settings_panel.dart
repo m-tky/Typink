@@ -23,7 +23,7 @@ class SettingsPanel extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SectionTitle(title: 'Application Theme'),
+          const _SectionTitle(title: 'Application Theme'),
           DropdownButtonFormField<AppThemeMode>(
             value: settings.theme,
             decoration: const InputDecoration(labelText: 'Theme'),
@@ -39,7 +39,7 @@ class SettingsPanel extends ConsumerWidget {
             },
           ),
           const Divider(height: 32),
-          _SectionTitle(title: 'Preview Options'),
+          const _SectionTitle(title: 'Preview Options'),
           SwitchListTile(
             title: const Text('Horizontal Page Flipping'),
             subtitle: const Text('Swipe left/right to change pages in preview'),
@@ -47,7 +47,7 @@ class SettingsPanel extends ConsumerWidget {
             onChanged: (value) => notifier.toggleHorizontalPreview(),
           ),
           const Divider(height: 32),
-          _SectionTitle(title: 'Editor Environment'),
+          const _SectionTitle(title: 'Editor Environment'),
           SwitchListTile(
             title: const Text('Vim Mode'),
             subtitle: const Text('Enable modal editing (Normal/Insert modes)'),
@@ -67,7 +67,7 @@ class SettingsPanel extends ConsumerWidget {
             onChanged: (value) => notifier.toggleShowWhitespace(),
           ),
           const Divider(height: 32),
-          _SectionTitle(title: 'Toolbar Position'),
+          const _SectionTitle(title: 'Toolbar Position'),
           Wrap(
             spacing: 8,
             children: ToolbarPosition.values.map((pos) {
@@ -81,7 +81,7 @@ class SettingsPanel extends ConsumerWidget {
             }).toList(),
           ),
           const Divider(height: 32),
-          _SectionTitle(title: 'Quick Palette'),
+          const _SectionTitle(title: 'Quick Palette'),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -143,12 +143,12 @@ class SettingsPanel extends ConsumerWidget {
             ),
           ),
           const Divider(height: 32),
-          _SectionTitle(title: 'Fonts'),
+          const _SectionTitle(title: 'Fonts'),
           DropdownButtonFormField<String>(
             value: settings.activeFont,
             decoration:
                 const InputDecoration(labelText: 'Preview Font (Typst)'),
-            items: [
+            items: {
               'IBM Plex Sans',
               'Moralerspace Argon',
               'Inter',
@@ -157,7 +157,7 @@ class SettingsPanel extends ConsumerWidget {
               settings.activeFont,
               ...settings.customFontPaths
                   .map((path) => p.basenameWithoutExtension(path)),
-            ].toSet().map((font) {
+            }.map((font) {
               return DropdownMenuItem(value: font, child: Text(font));
             }).toList(),
             onChanged: (val) {
@@ -168,7 +168,7 @@ class SettingsPanel extends ConsumerWidget {
           DropdownButtonFormField<String>(
             value: settings.editorFont,
             decoration: const InputDecoration(labelText: 'Editor Font'),
-            items: [
+            items: {
               'Moralerspace Argon',
               'IBM Plex Mono',
               'Fira Code',
@@ -177,7 +177,7 @@ class SettingsPanel extends ConsumerWidget {
               settings.editorFont,
               ...settings.customFontPaths
                   .map((path) => p.basenameWithoutExtension(path)),
-            ].toSet().map((font) {
+            }.map((font) {
               return DropdownMenuItem(value: font, child: Text(font));
             }).toList(),
             onChanged: (val) {

@@ -176,7 +176,7 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
             );
             _refreshView(syncIme: true);
             return;
-          } catch (e) {}
+          } catch (_) {}
         }
       }
       if (start > 0) {
@@ -191,7 +191,7 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
             );
             _refreshView(syncIme: true);
             return;
-          } catch (e) {}
+          } catch (_) {}
         }
       }
     }
@@ -248,7 +248,6 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
   void performSelector(String selectorName) {}
   @override
   void updateFloatingCursor(RawFloatingCursorPoint point) {}
-  @override
   void showAutofillHints() {}
   @override
   void insertTextPlaceholder(Size size) {}
@@ -256,9 +255,7 @@ mixin EditorImeHandler on EditorStateBase implements TextInputClient {
   void removeTextPlaceholder() {}
   @override
   void showToolbar() {}
-  @override
   void hideToolbar() {}
-  @override
   AutofillScope? get autofillScope => null;
   @override
   AutofillScope? get currentAutofillScope => null;

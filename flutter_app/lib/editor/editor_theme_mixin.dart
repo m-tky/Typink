@@ -37,14 +37,15 @@ mixin EditorThemeMixin {
           final level = s.headingLevel;
           double spanFontSize = editorFontSize;
           if (level != null) {
-            if (level == 1)
+            if (level == 1) {
               spanFontSize *= 1.5;
-            else if (level == 2)
+            } else if (level == 2) {
               spanFontSize *= 1.3;
-            else if (level == 3)
+            } else if (level == 3) {
               spanFontSize *= 1.2;
-            else
+            } else {
               spanFontSize *= 1.1;
+            }
           }
 
           children.add(TextSpan(

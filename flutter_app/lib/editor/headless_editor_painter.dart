@@ -197,8 +197,10 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
 
   void _drawSelection(Canvas canvas, TextPainter textPainter, double currentY,
       double leftMargin, int lineIdx, double canvasWidth) {
-    if (view.selectionStartLine == null || view.selectionStartColumnU16 == null)
+    if (view.selectionStartLine == null ||
+        view.selectionStartColumnU16 == null) {
       return;
+    }
 
     final startLine = view.selectionStartLine!.toInt();
     final startCol = view.selectionStartColumnU16!.toInt();
@@ -440,8 +442,8 @@ class HeadlessEditorPainter extends CustomPainter with EditorThemeMixin {
   void _drawGutterSign(Canvas canvas, double currentY,
       bridge.TypstDiagnostic diag, double opacity) {
     final Color color = diag.severity == 1 ? Colors.red : Colors.orange;
-    final double dotSize = 4.0;
-    final double centerX = 12.0; // In the left margin (10-20 range)
+    const double dotSize = 4.0;
+    const double centerX = 12.0; // In the left margin (10-20 range)
     final double centerY = currentY + (lineHeight * fontSize * 0.5);
 
     final paint = Paint()

@@ -87,7 +87,7 @@ class _ColorWheelPickerState extends State<ColorWheelPicker> {
                 color: hsvColor.toColor(),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(color: Colors.black26, blurRadius: 4),
                 ],
               ),
@@ -208,7 +208,7 @@ class SVSquarePainter extends CustomPainter {
     canvas.drawRect(rect, paintS);
 
     // Vertical Value Gradient (Linear multiplication)
-    final gradientV = LinearGradient(
+    const gradientV = LinearGradient(
       colors: [Colors.transparent, Colors.black],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
