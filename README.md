@@ -1,20 +1,20 @@
 # Typink
 
-**Typink** is a professional-grade scientific notebook application that seamlessly integrates **Typst**'s powerful typesetting with stable **handwriting** and diagramming capabilities.
+**Typink** is a scientific notebook app combining **Typst** typesetting with handwriting and diagramming, built with a Rust core and a Flutter frontend.
 
 ## Key Features
 
-- **Stable Diagramming (Option C)**: A dedicated Drawing Pad with a fixed 1333x1000 coordinate system, ensuring your diagrams never distort or drift.
-- **Translucent UI**: Draw directly over your Typst preview with a translucent canvas for perfect alignment.
-- **Professional Persistence**: Automatic saving of strokes as JSON (for editing) and SVG (for display). Robust data protection with AppLifecycle-aware flushing.
-- **Multi-File Management**: A built-in sidebar to manage multiple `.typ` files within a single synced project.
-- **Scientific PDF Export**: One-click professional PDF generation with timestamped filenames.
+- **Drawing Pad**: Fixed 1333×1000 coordinate space keeps diagrams consistent across edits.
+- **Typst Preview**: Live side-by-side preview with syntax highlighting and inline error diagnostics.
+- **Persistence**: Autosaves `.typ` source and stroke data (JSON + SVG) on edit; flushes on app lifecycle pause.
+- **Multi-file sidebar**: Manage multiple `.typ` files in one workspace directory.
+- **PDF Export**: One-tap PDF generation via the Typst engine.
 
 ## Architecture
 
 Typink uses a hybrid architecture:
-- **Frontend**: Flutter (Riverpod for state, `re_editor` for Typst editing).
-- **Engine**: Rust (Typst engine integration via `flutter_rust_bridge`).
+- **Frontend**: Flutter (Riverpod for state, custom headless editor with Vim keybindings).
+- **Engine**: Rust (Typst engine via `flutter_rust_bridge`).
 
 ### File Structure
 ```
